@@ -4,11 +4,6 @@ import { getReportBuffer, createWrappedFetch } from 'coze-coding-dev-sdk';
 
 let envLoaded = false;
 
-interface SupabaseCredentials {
-  url: string;
-  anonKey: string;
-}
-
 function loadEnv(): void {
   if (envLoaded || (process.env.COZE_SUPABASE_URL && process.env.COZE_SUPABASE_ANON_KEY)) {
     return;
@@ -68,35 +63,32 @@ except Exception as e:
   }
 }
 
-function getSupabaseCredentials(): SupabaseCredentials {
-  loadEnv();
-
-  const url = process.env.COZE_SUPABASE_URL;
-  const anonKey = process.env.COZE_SUPABASE_ANON_KEY;
-
-  if (!url) {
-    throw new Error('COZE_SUPABASE_URL is not set');
-  }
-  if (!anonKey) {
-    throw new Error('COZE_SUPABASE_ANON_KEY is not set');
-  }
-
-  return { url, anonKey };
-}
-
 function getSupabaseServiceRoleKey(): string | undefined {
   loadEnv();
   return process.env.COZE_SUPABASE_SERVICE_ROLE_KEY;
 }
 
 function getSupabaseClient(token?: string): SupabaseClient {
-  const { url, anonKey } = getSupabaseCredentials();
+  loadEnv();
+
+  const url = process.env.COZE_SUPABASE_URL;
+  const anonKey = process.env.COZE_SUPABASE_ANON_KEY;
+  const serviceRoleKey = process.env.COZE_SUPABASE_SERVICE_ROLE_KEY;
+
+  // 构建时没有环境变量，返回一个占位客户端（不会真正使用）
+  if (!url || !anonKey) {
+    return createClient('https://placeholder.supabase.co', 'placeholder-key', {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+  }
 
   let key: string;
   if (token) {
     key = anonKey;
   } else {
-    const serviceRoleKey = getSupabaseServiceRoleKey();
     key = serviceRoleKey ?? anonKey;
   }
 
@@ -125,4 +117,4 @@ function getSupabaseClient(token?: string): SupabaseClient {
   });
 }
 
-export { loadEnv, getSupabaseCredentials, getSupabaseServiceRoleKey, getSupabaseClient };
+export { loadEnv, getSupabaseServiceRoleKey, getSupabaseClient };
