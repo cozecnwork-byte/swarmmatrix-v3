@@ -1,65 +1,172 @@
-# 项目上下文
+# GlobalLeadGen v3 矩阵引流平台
 
-### 版本技术栈
+## 项目概览
+
+GlobalLeadGen v3 是一款专为新手小白设计的简化版矩阵引流平台，基于 **9层智能体架构** 与 **5层企业级平台架构**，提供直观易用的操作界面和一键式功能。
+
+### 核心特性
+
+- **9层智能体架构**：完整的AI智能体系统，从输入到输出的全流程自动化
+- **5层企业级平台架构**：从基础设施到应用层的分层设计
+- **小白专属功能**：一键发布、定时任务、模板市场、数据看板等
+- **7步标准工作流程**：接收→理解→选择→执行→观察→反思→输出
+- **零代码配置**：通过.env文件配置，无需编写复杂代码
+
+## 技术栈
 
 - **Framework**: Next.js 16 (App Router)
 - **Core**: React 19
 - **Language**: TypeScript 5
 - **UI 组件**: shadcn/ui (基于 Radix UI)
 - **Styling**: Tailwind CSS 4
+- **Database**: Supabase (PostgreSQL)
+- **AI**: coze-coding-dev-sdk (LLM集成)
+- **Storage**: S3 兼容对象存储
 
 ## 目录结构
 
 ```
-├── public/                 # 静态资源
-├── scripts/                # 构建与启动脚本
-│   ├── build.sh            # 构建脚本
-│   ├── dev.sh              # 开发环境启动脚本
-│   ├── prepare.sh          # 预处理脚本
-│   └── start.sh            # 生产环境启动脚本
+├── public/                     # 静态资源
 ├── src/
-│   ├── app/                # 页面路由与布局
-│   ├── components/ui/      # Shadcn UI 组件库
-│   ├── hooks/              # 自定义 Hooks
-│   ├── lib/                # 工具库
-│   │   └── utils.ts        # 通用工具函数 (cn)
-│   └── server.ts           # 自定义服务端入口
-├── next.config.ts          # Next.js 配置
-├── package.json            # 项目依赖管理
-└── tsconfig.json           # TypeScript 配置
+│   ├── app/                    # 页面路由
+│   │   ├── api/               # API路由
+│   │   │   ├── agent/         # 智能体API
+│   │   │   ├── workflow/      # 工作流API
+│   │   │   ├── template/      # 模板API
+│   │   │   ├── analytics/     # 数据分析API
+│   │   │   ├── schedule/      # 定时任务API
+│   │   │   └── publish/       # 一键发布API
+│   │   ├── dashboard/         # 仪表盘页面
+│   │   ├── agent/             # 智能体页面
+│   │   ├── workflow/          # 工作流页面
+│   │   ├── publish/           # 一键发布页面
+│   │   ├── templates/         # 模板市场页面
+│   │   ├── schedule/          # 定时任务页面
+│   │   ├── analytics/         # 数据看板页面
+│   │   └── settings/          # 系统设置页面
+│   ├── components/            # UI组件
+│   │   ├── layout/           # 布局组件
+│   │   └── ui/               # shadcn/ui组件
+│   ├── lib/                   # 核心库
+│   │   ├── agent/            # 9层智能体架构
+│   │   │   ├── input-layer.ts        # 第一层：输入层
+│   │   │   ├── memory-layer.ts       # 第二层：记忆层
+│   │   │   ├── planning-layer.ts     # 第三层：规划层
+│   │   │   ├── action-layer.ts       # 第四层：行动层
+│   │   │   ├── llm-layer.ts          # 第五层：大模型层
+│   │   │   ├── output-layer.ts       # 第六层：输出层
+│   │   │   ├── reflection-layer.ts   # 第七层：反思层
+│   │   │   ├── tool-layer.ts         # 第八层：工具层
+│   │   │   ├── knowledge-layer.ts    # 第九层：知识库层
+│   │   │   └── index.ts              # 智能体主类
+│   │   └── utils.ts          # 工具函数
+│   └── storage/              # 数据存储
+│       └── database/         # 数据库配置
+├── DESIGN.md                  # 设计规范
+├── package.json              # 依赖管理
+└── tsconfig.json             # TypeScript配置
 ```
 
-- 项目文件（如 app 目录、pages 目录、components 等）默认初始化到 `src/` 目录下。
+## 9层智能体架构
 
-## 包管理规范
+| 层级 | 名称 | 职责 |
+|-----|------|------|
+| 第一层 | 输入层 | 自然语言指令、外部事件触发、环境状态查看、定时任务设置 |
+| 第二层 | 记忆层 | 对话历史短期记忆、知识库长期记忆、工作记忆 |
+| 第三层 | 规划层 | 目标理解、任务分解、子任务计划生成 |
+| 第四层 | 行动层 | 工具选择、执行操作、成果观察 |
+| 第五层 | 大模型层 | 理解、推理、决策、内容生成 |
+| 第六层 | 输出层 | 自然语言回复、报告生成、API调用、状态更新 |
+| 第七层 | 反思层 | 自动评估结果、总结经验、优化计划 |
+| 第八层 | 工具层 | 搜索引擎、计算器、API调用等 |
+| 第九层 | 知识库层 | 向量数据库、文档知识库、结构化数据 |
 
-**仅允许使用 pnpm** 作为包管理器，**严禁使用 npm 或 yarn**。
-**常用命令**：
-- 安装依赖：`pnpm add <package>`
-- 安装开发依赖：`pnpm add -D <package>`
-- 安装所有依赖：`pnpm install`
-- 移除依赖：`pnpm remove <package>`
+## 5层企业级平台架构
 
-## 开发规范
+| 层级 | 名称 | 组件 |
+|-----|------|------|
+| 第一层 | 基础设施层 | 云服务器、数据库、对象存储 |
+| 第二层 | 模型与算法层 | 大模型优化、RAG增强 |
+| 第三层 | 核心引擎层 | lead_gen、video_publish等10大引流引擎 |
+| 第四层 | 能力扩展层 | 每日引流、视频发布工作流 |
+| 第五层 | 应用层 | 用户界面、小白功能 |
 
-### 编码规范
+## 数据库表结构
 
-- 默认按 TypeScript `strict` 心智写代码；优先复用当前作用域已声明的变量、函数、类型和导入，禁止引用未声明标识符或拼错变量名。
-- 禁止隐式 `any` 和 `as any`；函数参数、返回值、解构项、事件对象、`catch` 错误在使用前应有明确类型或先完成类型收窄，并清理未使用的变量和导入。
+- `agent_tasks` - 智能体任务记录
+- `workflows` - 工作流定义
+- `templates` - 模板市场
+- `lead_data` - 引流数据
+- `scheduled_tasks` - 定时任务
+- `platform_accounts` - 平台账号
+- `agent_memory` - 智能体记忆
+- `agent_reflections` - 反思记录
+- `analytics_data` - 数据分析
 
-### next.config 配置规范
+## 开发命令
 
-- 配置的路径不要写死绝对路径，必须使用 path.resolve(__dirname, ...)、import.meta.dirname 或 process.cwd() 动态拼接。
+```bash
+# 安装依赖
+pnpm install
 
-### Hydration 问题防范
+# 开发模式
+pnpm dev
 
-1. 严禁在 JSX 渲染逻辑中直接使用 typeof window、Date.now()、Math.random() 等动态数据。**必须使用 'use client' 并配合 useEffect + useState 确保动态内容仅在客户端挂载后渲染**；同时严禁非法 HTML 嵌套（如 <p> 嵌套 <div>）。
-2. **禁止使用 head 标签**，优先使用 metadata，详见文档：https://nextjs.org/docs/app/api-reference/functions/generate-metadata
-   1. 三方 CSS、字体等资源可在 `globals.css` 中顶部通过 `@import` 引入或使用 next/font
-   2. preload, preconnect, dns-prefetch 通过 ReactDOM 的 preload、preconnect、dns-prefetch 方法引入
-   3. json-ld 可阅读 https://nextjs.org/docs/app/guides/json-ld
+# 构建生产版本
+pnpm build
 
-## UI 设计与组件规范 (UI & Styling Standards)
+# 启动生产服务
+pnpm start
 
-- 模板默认预装核心组件库 `shadcn/ui`，位于`src/components/ui/`目录下
-- Next.js 项目**必须默认**采用 shadcn/ui 组件、风格和规范，**除非用户指定用其他的组件和规范。**
+# 类型检查
+pnpm ts-check
+
+# 代码检查
+pnpm lint
+```
+
+## API接口
+
+| 接口 | 方法 | 功能 |
+|-----|------|------|
+| `/api/agent` | POST | 执行智能体任务 |
+| `/api/agent` | GET | 获取任务列表 |
+| `/api/agent/tasks/[id]` | GET | 获取任务详情 |
+| `/api/workflow` | GET/POST | 工作流管理 |
+| `/api/template` | GET/POST | 模板管理 |
+| `/api/analytics` | GET | 数据分析 |
+| `/api/schedule` | GET/POST | 定时任务管理 |
+| `/api/publish` | POST | 一键发布 |
+
+## 小白功能指南
+
+### 一键发布
+1. 进入"一键发布"页面
+2. 编写或选择内容模板
+3. 选择目标平台
+4. 点击发布按钮
+
+### 定时任务
+1. 进入"定时任务"页面
+2. 创建新任务
+3. 设置执行时间和频率
+4. 关联工作流
+
+### 模板使用
+1. 进入"模板市场"
+2. 浏览或搜索模板
+3. 点击"使用"按钮
+4. 根据引导完成操作
+
+### 智能体对话
+1. 进入"智能体"页面
+2. 输入自然语言指令
+3. AI自动理解并执行
+4. 查看执行结果
+
+## 注意事项
+
+- 所有平台账号需要先在"系统设置"中连接
+- 定时任务依赖系统调度，请确保服务稳定运行
+- 数据分析展示最近30天的数据
+- 智能体支持自然语言指令，无需学习命令语法
