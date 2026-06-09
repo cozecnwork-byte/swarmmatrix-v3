@@ -21,6 +21,419 @@ export const healthCheck = pgTable("health_check", {
   }).defaultNow(),
 });
 
+// ========== 质量保证表 ==========
+export const qualityAssurance = pgTable(
+  "quality_assurance",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 保证类型：quality（质量保证）、efficiency（效能提升）
+    assurance_type: varchar("assurance_type", { length: 30 }).notNull(),
+    // 检查项
+    check_item: varchar("check_item", { length: 100 }).notNull(),
+    // 检查标准
+    check_standard: jsonb("check_standard"),
+    // 检查结果
+    check_result: jsonb("check_result"),
+    // 状态：pending, passed, failed, needs_improvement
+    status: varchar("status", { length: 30 }).default("pending"),
+    // 问题描述
+    issue_description: text("issue_description"),
+    // 改进措施
+    improvement_actions: jsonb("improvement_actions"),
+    // 负责人
+    assigned_to: varchar("assigned_to", { length: 36 }),
+    // 检查时间
+    checked_at: timestamp("checked_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("quality_assurance_project_id_idx").on(table.project_id),
+    index("quality_assurance_assurance_type_idx").on(table.assurance_type),
+    index("quality_assurance_status_idx").on(table.status),
+  ]
+);
+
+// ========== 接口测试表 ==========
+export const apiTests = pgTable(
+  "api_tests",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 测试名称
+    test_name: varchar("test_name", { length: 200 }).notNull(),
+    // API端点
+    endpoint: varchar("endpoint", { length: 500 }).notNull(),
+    // HTTP方法
+    method: varchar("method", { length: 10 }).notNull(),
+    // 请求头
+    headers: jsonb("headers"),
+    // 请求体
+    request_body: jsonb("request_body"),
+    // 预期响应
+    expected_response: jsonb("expected_response"),
+    // 实际响应
+    actual_response: jsonb("actual_response"),
+    // 状态码
+    status_code: integer("status_code"),
+    // 响应时间（毫秒）
+    response_time_ms: integer("response_time_ms"),
+    // 测试状态：pending, passed, failed
+    status: varchar("status", { length: 20 }).default("pending"),
+    // 错误信息
+    error_message: text("error_message"),
+    // 执行时间
+    executed_at: timestamp("executed_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("api_tests_project_id_idx").on(table.project_id),
+    index("api_tests_status_idx").on(table.status),
+    index("api_tests_endpoint_idx").on(table.endpoint),
+  ]
+);
+
+// ========== 性能测试表 ==========
+export const performanceTests = pgTable(
+  "performance_tests",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 测试名称
+    test_name: varchar("test_name", { length: 200 }).notNull(),
+    // 测试类型：load（负载测试）、stress（压力测试）、soak（稳定性测试）
+    test_type: varchar("test_type", { length: 30 }).notNull(),
+    // 测试配置
+    test_config: jsonb("test_config"),
+    // 并发用户数
+    concurrent_users: integer("concurrent_users"),
+    // 测试时长（秒）
+    duration_seconds: integer("duration_seconds"),
+    // 结果指标
+    results: jsonb("results"),
+    // 平均响应时间（毫秒）
+    avg_response_time_ms: integer("avg_response_time_ms"),
+    // 最大响应时间（毫秒）
+    max_response_time_ms: integer("max_response_time_ms"),
+    // 吞吐量（请求/秒）
+    throughput: numeric("throughput", { precision: 10, scale: 2 }),
+    // 错误率
+    error_rate: numeric("error_rate", { precision: 5, scale: 2 }),
+    // 状态：pending, running, completed, failed
+    status: varchar("status", { length: 20 }).default("pending"),
+    // 执行时间
+    executed_at: timestamp("executed_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("performance_tests_project_id_idx").on(table.project_id),
+    index("performance_tests_test_type_idx").on(table.test_type),
+    index("performance_tests_status_idx").on(table.status),
+  ]
+);
+
+// ========== 安全测试表 ==========
+export const securityTests = pgTable(
+  "security_tests",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 测试名称
+    test_name: varchar("test_name", { length: 200 }).notNull(),
+    // 安全类型：authentication（认证）、authorization（授权）、injection（注入）、xss（跨站脚本）、csrf（跨站请求伪造）
+    security_type: varchar("security_type", { length: 50 }).notNull(),
+    // 目标
+    target: varchar("target", { length: 500 }),
+    // 测试payload
+    payload: jsonb("payload"),
+    // 发现的漏洞
+    vulnerabilities: jsonb("vulnerabilities"),
+    // 风险等级：low, medium, high, critical
+    risk_level: varchar("risk_level", { length: 20 }),
+    // 状态：pending, scanning, completed, failed
+    status: varchar("status", { length: 20 }).default("pending"),
+    // 修复建议
+    remediation_suggestions: text("remediation_suggestions"),
+    // 扫描时间
+    scanned_at: timestamp("scanned_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("security_tests_project_id_idx").on(table.project_id),
+    index("security_tests_security_type_idx").on(table.security_type),
+    index("security_tests_risk_level_idx").on(table.risk_level),
+    index("security_tests_status_idx").on(table.status),
+  ]
+);
+
+// ========== 测试开发表 ==========
+export const testDevelopment = pgTable(
+  "test_development",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 开发类型：automation（自动化测试）、unit（单元测试）、integration（集成测试）、e2e（端到端测试）
+    dev_type: varchar("dev_type", { length: 30 }).notNull(),
+    // 测试脚本
+    test_scripts: jsonb("test_scripts"),
+    // 测试框架
+    test_framework: varchar("test_framework", { length: 100 }),
+    // 覆盖率目标
+    coverage_target: numeric("coverage_target", { precision: 5, scale: 2 }),
+    // 实际覆盖率
+    actual_coverage: numeric("actual_coverage", { precision: 5, scale: 2 }),
+    // CI/CD配置
+    ci_cd_config: jsonb("ci_cd_config"),
+    // 状态：draft, active, deprecated
+    status: varchar("status", { length: 20 }).default("draft"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("test_development_project_id_idx").on(table.project_id),
+    index("test_development_dev_type_idx").on(table.dev_type),
+    index("test_development_status_idx").on(table.status),
+  ]
+);
+
+// ========== 测试运维表 ==========
+export const testOperations = pgTable(
+  "test_operations",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 环境类型：dev（开发环境）、test（测试环境）、uat（UAT环境）、prod（生产环境）
+    env_type: varchar("env_type", { length: 20 }).notNull(),
+    // 环境配置
+    env_config: jsonb("env_config"),
+    // 服务器信息
+    server_info: jsonb("server_info"),
+    // 数据库配置
+    database_config: jsonb("database_config"),
+    // 监控配置
+    monitoring_config: jsonb("monitoring_config"),
+    // 环境状态
+    env_status: varchar("env_status", { length: 30 }),
+    // 最后检查时间
+    last_check_at: timestamp("last_check_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("test_operations_project_id_idx").on(table.project_id),
+    index("test_operations_env_type_idx").on(table.env_type),
+    index("test_operations_env_status_idx").on(table.env_status),
+  ]
+);
+
+// ========== 测试管理表 ==========
+export const testManagement = pgTable(
+  "test_management",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 管理类型：planning（测试计划）、execution（测试执行）、reporting（测试报告）、review（测试评审）
+    management_type: varchar("management_type", { length: 30 }).notNull(),
+    // 测试计划
+    test_plan: jsonb("test_plan"),
+    // 测试用例
+    test_cases: jsonb("test_cases"),
+    // 测试报告
+    test_report: jsonb("test_report"),
+    // 测试总结
+    test_summary: text("test_summary"),
+    // 负责人
+    owner_id: varchar("owner_id", { length: 36 }),
+    // 状态：draft, in_progress, completed, cancelled
+    status: varchar("status", { length: 20 }).default("draft"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("test_management_project_id_idx").on(table.project_id),
+    index("test_management_management_type_idx").on(table.management_type),
+    index("test_management_status_idx").on(table.status),
+  ]
+);
+
+// ========== 文档管理表 ==========
+export const documentManagement = pgTable(
+  "document_management",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 文档类型：test_plan（测试计划）、test_case（测试用例）、test_report（测试报告）、user_manual（用户手册）、api_doc（API文档）
+    doc_type: varchar("doc_type", { length: 30 }).notNull(),
+    // 文档标题
+    title: varchar("title", { length: 200 }).notNull(),
+    // 文档内容
+    content: text("content"),
+    // 文档版本
+    version: varchar("version", { length: 20 }).default("1.0"),
+    // 文档状态：draft, review, published, archived
+    status: varchar("status", { length: 20 }).default("draft"),
+    // 作者
+    author_id: varchar("author_id", { length: 36 }),
+    // 标签
+    tags: jsonb("tags"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("document_management_project_id_idx").on(table.project_id),
+    index("document_management_doc_type_idx").on(table.doc_type),
+    index("document_management_status_idx").on(table.status),
+  ]
+);
+
+// ========== AI智能体应用管理平台架构表 ==========
+export const aiAgentPlatform = pgTable(
+  "ai_agent_platform",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 平台名称
+    platform_name: varchar("platform_name", { length: 200 }).notNull(),
+    // 架构层级：application（应用层）、model（模型层）、infrastructure（基础设施层）
+    architecture_layer: varchar("architecture_layer", { length: 30 }).notNull(),
+    // 应用层：generative_ai（生成式AI）、expert_knowledge（专家知识库）、ai_customer_service（AI客服）、digital_human（数字人）、ocr（OCR识别）、smart_monitoring（智慧监控）、coding_assistant（编程助手）、multilingual_translation（多语言翻译）
+    application_type: varchar("application_type", { length: 50 }),
+    // 模型层：model_management（AI模型管理）、model_tuning（AI模型调优）、model_inference（AI模型推理服务）
+    model_type: varchar("model_type", { length: 50 }),
+    // 基础设施层：virtualization（虚拟化）、ops_management（运维管理）、disaster_recovery（容灾服务）、security_service（安全服务）
+    infrastructure_type: varchar("infrastructure_type", { length: 50 }),
+    // 配置
+    config: jsonb("config"),
+    // 状态
+    status: varchar("status", { length: 20 }).default("active"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("ai_agent_platform_project_id_idx").on(table.project_id),
+    index("ai_agent_platform_architecture_layer_idx").on(table.architecture_layer),
+    index("ai_agent_platform_status_idx").on(table.status),
+  ]
+);
+
+// ========== AI应用开发表 ==========
+export const aiApplicationDevelopment = pgTable(
+  "ai_application_development",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 开发类型：llm_ops（多种LLMOps服务）、rag_knowledge（RAG知识库）、version_management（版本管理）、agent（Agent）、workflow（Workflow）、plugin_management（插件管理）、data_isolation（数据隔离）
+    dev_type: varchar("dev_type", { length: 50 }).notNull(),
+    // 配置
+    config: jsonb("config"),
+    // 状态
+    status: varchar("status", { length: 20 }).default("active"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("ai_application_development_project_id_idx").on(table.project_id),
+    index("ai_application_development_dev_type_idx").on(table.dev_type),
+  ]
+);
+
+// ========== 服务评测表 ==========
+export const serviceEvaluation = pgTable(
+  "service_evaluation",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 评测类型：hardware_compatibility（硬件适配性）、model_performance（模型计算效能）、high_load_stability（高负载稳定性）、elastic_scalability（弹性扩展能力）
+    eval_type: varchar("eval_type", { length: 50 }).notNull(),
+    // 评测结果
+    eval_results: jsonb("eval_results"),
+    // 评分
+    score: numeric("score", { precision: 5, scale: 2 }),
+    // 状态
+    status: varchar("status", { length: 20 }).default("pending"),
+    evaluated_at: timestamp("evaluated_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("service_evaluation_project_id_idx").on(table.project_id),
+    index("service_evaluation_eval_type_idx").on(table.eval_type),
+  ]
+);
+
+// ========== 门户运营表 ==========
+export const portalOperations = pgTable(
+  "portal_operations",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }),
+    // 运营类型：multi_tenant_management（多租户管理）、compute_quota（算力配额）、service_permissions（服务权限）、work_order_approval（工单审批）、billing_and_accounting（计费和账单）、multi_region_statistics（多域服务统计）、visualized_dashboard（可视化智慧大屏）
+    ops_type: varchar("ops_type", { length: 50 }).notNull(),
+    // 配置
+    config: jsonb("config"),
+    // 状态
+    status: varchar("status", { length: 20 }).default("active"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("portal_operations_project_id_idx").on(table.project_id),
+    index("portal_operations_ops_type_idx").on(table.ops_type),
+  ]
+);
+
 // ========== 矩阵账号类型表 ==========
 export const matrixAccountTypes = pgTable(
   "matrix_account_types",
