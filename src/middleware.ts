@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // TikTok验证文件内容
-const TIKTOK_VERIFICATION_FILE = 'tiktokjYnY11EEplJ2Vvi5v1MEecqVK6L76kCv.txt';
-const TIKTOK_VERIFICATION_CONTENT = 'tiktokjYnY11EEplJ2Vvi5v1MEecqVK6L76kCv';
+const TIKTOK_VERIFICATION_FILE = 'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt';
+const TIKTOK_VERIFICATION_CONTENT = 'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,6 +28,6 @@ export function middleware(request: NextRequest) {
 // 配置中间件匹配路径
 export const config = {
   matcher: [
-    '/tiktokjYnY11EEplJ2Vvi5v1MEecqVK6L76kCv.txt',
+    '/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
   ],
 };
