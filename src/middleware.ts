@@ -32,6 +32,20 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // 处理.well-known路径的TikTok验证
+  if (pathname === '/.well-known/tiktok-site-verification' || 
+      pathname === '/path/.well-known/tiktok-site-verification') {
+    return new NextResponse('tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ', {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
+  }
+
   // 其他请求继续正常处理
   return NextResponse.next();
 }
@@ -45,5 +59,7 @@ export const config = {
     '/path/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
     '/path/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt',
     '/path/tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt',
+    '/.well-known/tiktok-site-verification',
+    '/path/.well-known/tiktok-site-verification',
   ],
 };
