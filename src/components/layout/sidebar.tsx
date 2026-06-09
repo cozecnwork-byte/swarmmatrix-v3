@@ -18,6 +18,7 @@ import {
   Users,
   FileText,
   Shield,
+  CheckCircle2,
 } from "lucide-react";
 
 const navigation = [
@@ -147,6 +148,13 @@ export function Sidebar() {
               >
                 <Shield className="h-4 w-4" />
                 Privacy Policy
+              </Link>
+              <Link
+                href="/path"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                TikTok Verification
               </Link>
             </div>
             <div className="mt-3 px-3 py-2 bg-blue-50 rounded-lg">
