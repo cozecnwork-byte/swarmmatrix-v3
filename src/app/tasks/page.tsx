@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AppLayout } from '@/components/layout/app-layout';
 
 // 模拟任务数据
 const mockTasks = [
@@ -134,7 +135,8 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <AppLayout>
+      <div className="space-y-6">
       {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div>
@@ -343,6 +345,7 @@ export default function TasksPage() {
           );
         })}
       </div>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
