@@ -1,41 +1,117 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, ArrowLeft, CheckCircle2, Sparkles, User, Package, Users, FileText, Share2, Server, Globe, PlayCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Sparkles, 
+  CheckCircle2, 
+  ArrowRight, 
+  ArrowLeft, 
+  PlayCircle,
+  Globe,
+  Target,
+  Users,
+  TrendingUp,
+  Settings,
+  AlertCircle,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-// 步骤配置
-const STEPS = [
-  { id: 1, name: '基础信息', icon: User, description: '项目名称和描述' },
-  { id: 2, name: '产品信息', icon: Package, description: '产品详情和卖点' },
-  { id: 3, name: '目标客户', icon: Users, description: '国家和人群标签' },
-  { id: 4, name: '内容策略', icon: FileText, description: '内容类型和主题' },
-  { id: 5, name: '平台选择', icon: Share2, description: '平台组合推荐' },
-  { id: 6, name: '账号配置', icon: Server, description: '账号数量和分层' },
-  { id: 7, name: '启动确认', icon: Globe, description: 'IP检查与启动' },
+// 全球国家列表
+const GLOBAL_COUNTRIES = [
+  { name: '中国', code: 'CN', flag: '🇨🇳', continent: '亚洲' },
+  { name: '美国', code: 'US', flag: '🇺🇸', continent: '北美' },
+  { name: '日本', code: 'JP', flag: '🇯🇵', continent: '亚洲' },
+  { name: '韩国', code: 'KR', flag: '🇰🇷', continent: '亚洲' },
+  { name: '英国', code: 'GB', flag: '🇬🇧', continent: '欧洲' },
+  { name: '德国', code: 'DE', flag: '🇩🇪', continent: '欧洲' },
+  { name: '法国', code: 'FR', flag: '🇫🇷', continent: '欧洲' },
+  { name: '意大利', code: 'IT', flag: '🇮🇹', continent: '欧洲' },
+  { name: '西班牙', code: 'ES', flag: '🇪🇸', continent: '欧洲' },
+  { name: '加拿大', code: 'CA', flag: '🇨🇦', continent: '北美' },
+  { name: '澳大利亚', code: 'AU', flag: '🇦🇺', continent: '大洋洲' },
+  { name: '印度', code: 'IN', flag: '🇮🇳', continent: '亚洲' },
+  { name: '巴西', code: 'BR', flag: '🇧🇷', continent: '南美' },
+  { name: '墨西哥', code: 'MX', flag: '🇲🇽', continent: '北美' },
+  { name: '印度尼西亚', code: 'ID', flag: '🇮🇩', continent: '亚洲' },
+  { name: '土耳其', code: 'TR', flag: '🇹🇷', continent: '欧亚' },
+  { name: '俄罗斯', code: 'RU', flag: '🇷🇺', continent: '欧亚' },
+  { name: '沙特', code: 'SA', flag: '🇸🇦', continent: '中东' },
+  { name: '阿联酋', code: 'AE', flag: '🇦🇪', continent: '中东' },
+  { name: '尼日利亚', code: 'NG', flag: '🇳🇬', continent: '非洲' },
 ];
 
-export default function AIWizardPage() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [projectId, setProjectId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [aiRecommendations, setAiRecommendations] = useState<any>(null);
-  const [stepData, setStepData] = useState<any>({});
-  const [progress, setProgress] = useState(0);
+// 目标人群标签
+const AUDIENCE_GROUPS = [
+  { value: 'creator', label: '创作者', icon: '🎨' },
+  { value: 'business', label: '企业主', icon: '🏢' },
+  { value: 'developer', label: '开发者', icon: '💻' },
+  { value: 'marketing', label: '营销人员', icon: '📢' },
+  { value: 'student', label: '学生', icon: '🎓' },
+  { value: 'general', label: '大众消费者', icon: '👥' },
+];
 
-  useEffect(() => {
-    setProgress(((currentStep - 1) / (STEPS.length - 1)) * 100);
-  }, [currentStep]);
+// 内容策略类型
+const CONTENT_STRATEGIES = [
+  { value: 'kol', label: 'KOL合作', description: '与当地有影响力的KOL合作推广' },
+  { value: 'brand', label: '品牌账号', description: '建立官方品牌账号，发布官方内容' },
+  { value: 'micro', label: '小号矩阵', description: '创建多个小号，批量发布内容' },
+  { value: 'mixed', label: '混合策略', description: 'KOL + 品牌账号 + 小号 综合使用' },
+];
+
+// 全球平台列表
+const GLOBAL_PLATFORMS = [
+  { name: 'TikTok', icon: '🎵', region: '全球', category: '短视频' },
+  { name: 'Instagram', icon: '📸', region: '全球', category: '图片社交' },
+  { name: 'YouTube', icon: '📺', region: '全球', category: '长视频' },
+  { name: 'Facebook', icon: '📘', region: '全球', category: '社交网络' },
+  { name: 'Twitter/X', icon: '🐦', region: '全球', category: '短内容' },
+  { name: 'LinkedIn', icon: '💼', region: '全球', category: '职场社交' },
+  { name: 'Pinterest', icon: '📌', region: '全球', category: '图片发现' },
+  { name: 'Snapchat', icon: '👻', region: '欧美', category: '即时社交' },
+  { name: 'WhatsApp', icon: '💬', region: '全球', category: '即时通讯' },
+  { name: 'Telegram', icon: '✈️', region: '全球', category: '即时通讯' },
+  { name: 'Reddit', icon: '🔴', region: '全球', category: '社区论坛' },
+  { name: 'Discord', icon: '💜', region: '全球', category: '社群互动' },
+  { name: '抖音', icon: '🎵', region: '中国', category: '短视频' },
+  { name: '小红书', icon: '📖', region: '中国', category: '内容社区' },
+  { name: 'B站', icon: '📺', region: '中国', category: '长视频' },
+  { name: '微博', icon: '🌐', region: '中国', category: '社交网络' },
+  { name: 'Line', icon: '💚', region: '日本/台湾', category: '即时通讯' },
+  { name: 'KakaoTalk', icon: '💛', region: '韩国', category: '即时通讯' },
+];
+
+// 步骤定义
+const STEPS = [
+  { id: 1, name: '项目信息', icon: Globe, description: '设置基础项目信息' },
+  { id: 2, name: '产品信息', icon: Target, description: '介绍你的产品和卖点' },
+  { id: 3, name: '目标客户', icon: Users, description: '选择目标国家、人群和语言' },
+  { id: 4, name: '内容策略', icon: TrendingUp, description: 'AI推荐最佳内容策略' },
+  { id: 5, name: '平台选择', icon: Globe, description: 'AI智能匹配全球平台' },
+  { id: 6, name: '账号配置', icon: Settings, description: '60%主力 + 40%备用，上限50' },
+  { id: 7, name: 'IP检查', icon: AlertCircle, description: '逐国IP检查，9行配置总览' },
+];
+
+export default function GlobalAIWizard() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [stepData, setStepData] = useState<Record<number, any>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [projectId, setProjectId] = useState<string>('');
+  const [aiRecommendations, setAiRecommendations] = useState<any>(null);
+
+  const progress = (currentStep / STEPS.length) * 100;
 
   // 创建项目
   const createProject = async (data: any) => {
@@ -46,7 +122,7 @@ export default function AIWizardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: 'current-user',
-          action: 'createProject',
+          action: 'initializeWizard',
           data,
         }),
       });
@@ -54,12 +130,13 @@ export default function AIWizardPage() {
       const result = await response.json();
       if (result.success) {
         setProjectId(result.data.id);
-        setStepData({ ...stepData, 1: data });
+        setStepData({ 1: data });
+        setAiRecommendations(result.data.recommendations);
         setCurrentStep(2);
         toast.success('项目创建成功！');
       }
     } catch (error) {
-      toast.error('创建项目失败');
+      toast.error('创建失败');
     } finally {
       setIsLoading(false);
     }
@@ -75,19 +152,20 @@ export default function AIWizardPage() {
         body: JSON.stringify({
           userId: 'current-user',
           action: 'updateStep',
-          step: currentStep,
-          data: {
-            projectId,
-            stepData: data,
+          data: { 
+            projectId, 
+            step: currentStep, 
+            stepData: data 
           },
         }),
       });
 
       const result = await response.json();
       if (result.success) {
-        setAiRecommendations(result.data.recommendations);
         setStepData({ ...stepData, [currentStep]: data });
-        
+        if (result.data.recommendations) {
+          setAiRecommendations({ ...aiRecommendations, ...result.data.recommendations });
+        }
         if (currentStep < STEPS.length) {
           setCurrentStep(currentStep + 1);
         }
@@ -123,7 +201,7 @@ export default function AIWizardPage() {
 
       const result = await response.json();
       if (result.success) {
-        toast.success('项目启动成功！正在执行引流方案...');
+        toast.success('🚀 项目启动成功！全球引流方案开始执行...');
       }
     } catch (error) {
       toast.error('启动失败');
@@ -141,8 +219,8 @@ export default function AIWizardPage() {
             <div className="flex items-center gap-3">
               <Sparkles className="w-8 h-8 text-blue-500" />
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">AI创建向导</h1>
-                <p className="text-sm text-slate-500">7步创建你的专属引流方案</p>
+                <h1 className="text-2xl font-bold text-slate-900">全球矩阵引流向导</h1>
+                <p className="text-sm text-slate-500">7步创建你的专属全球引流方案</p>
               </div>
             </div>
             <div className="text-sm text-slate-500">
@@ -216,6 +294,7 @@ export default function AIWizardPage() {
               isLastStep={currentStep === STEPS.length}
               onStart={startProject}
               recommendations={aiRecommendations}
+              allStepData={stepData}
             />
           </CardContent>
         </Card>
@@ -234,7 +313,8 @@ function StepContent({
   hasPrev, 
   isLastStep,
   onStart,
-  recommendations 
+  recommendations,
+  allStepData
 }: any) {
   const [formData, setFormData] = useState(data || {});
 
@@ -250,14 +330,15 @@ function StepContent({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 步骤1: 项目信息 */}
       {step === 1 && (
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>项目名称</Label>
             <Input 
-              placeholder="例如：2024科技数码涨粉计划"
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="例如：2024全球数码产品推广计划"
+              value={formData.projectName || ''}
+              onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
             />
             {recommendations?.projectNameSuggestions && (
               <div className="flex flex-wrap gap-2">
@@ -267,7 +348,7 @@ function StepContent({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => handleUseRecommendation('name', name)}
+                    onClick={() => handleUseRecommendation('projectName', name)}
                   >
                     {name}
                   </Button>
@@ -278,7 +359,7 @@ function StepContent({
           <div className="space-y-2">
             <Label>项目描述</Label>
             <Textarea 
-              placeholder="描述你的引流目标和预期效果..."
+              placeholder="描述你的全球引流目标和预期效果..."
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
@@ -287,6 +368,7 @@ function StepContent({
         </div>
       )}
 
+      {/* 步骤2: 产品信息 */}
       {step === 2 && (
         <div className="space-y-4">
           <div className="space-y-2">
@@ -298,7 +380,7 @@ function StepContent({
             />
           </div>
           <div className="space-y-2">
-            <Label>产品链接</Label>
+            <Label>产品链接（可选）</Label>
             <Input 
               placeholder="https://..."
               value={formData.productUrl || ''}
@@ -306,160 +388,229 @@ function StepContent({
             />
           </div>
           <div className="space-y-2">
-            <Label>产品描述</Label>
+            <Label>产品卖点</Label>
             <Textarea 
-              placeholder="详细描述你的产品特点和优势..."
-              value={formData.productDescription || ''}
-              onChange={(e) => setFormData({ ...formData, productDescription: e.target.value })}
+              placeholder="详细描述你的产品特点、优势和核心卖点..."
+              value={formData.productSellingPoints || ''}
+              onChange={(e) => setFormData({ ...formData, productSellingPoints: e.target.value })}
               rows={4}
             />
+            {recommendations?.sellingPoints && (
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <Label className="text-purple-700 mb-2 block">AI提取的卖点</Label>
+                <div className="space-y-2">
+                  {recommendations.sellingPoints.map((point: string, idx: number) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-500 mt-0.5" />
+                      <span className="text-sm text-purple-800">{point}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
+      {/* 步骤3: 目标客户群体 */}
       {step === 3 && (
-        <div className="space-y-4">
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <Label>目标国家/地区（可多选）</Label>
+            <Tabs defaultValue="亚洲">
+              <TabsList className="grid grid-cols-5">
+                <TabsTrigger value="亚洲">亚洲</TabsTrigger>
+                <TabsTrigger value="欧洲">欧洲</TabsTrigger>
+                <TabsTrigger value="北美">北美</TabsTrigger>
+                <TabsTrigger value="南美">南美</TabsTrigger>
+                <TabsTrigger value="其他">其他</TabsTrigger>
+              </TabsList>
+              {['亚洲', '欧洲', '北美', '南美', '其他'].map((continent) => (
+                <TabsContent key={continent} value={continent}>
+                  <div className="grid grid-cols-3 gap-2">
+                    {GLOBAL_COUNTRIES.filter(c => c.continent === continent).map((country) => (
+                      <div key={country.code} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={country.code}
+                          checked={formData.countries?.includes(country.code)}
+                          onCheckedChange={(checked) => {
+                            const countries = formData.countries || [];
+                            if (checked) {
+                              setFormData({ ...formData, countries: [...countries, country.code] });
+                            } else {
+                              setFormData({ ...formData, countries: countries.filter((c: string) => c !== country.code) });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={country.code} className="cursor-pointer flex items-center gap-1">
+                          <span>{country.flag}</span>
+                          <span className="text-sm">{country.name}</span>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>目标年龄段</Label>
+              <Select 
+                value={formData.ageGroup}
+                onValueChange={(value) => setFormData({ ...formData, ageGroup: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择年龄段" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="13-17">13-17岁（青少年）</SelectItem>
+                  <SelectItem value="18-24">18-24岁（青年）</SelectItem>
+                  <SelectItem value="25-34">25-34岁（青年）</SelectItem>
+                  <SelectItem value="35-44">35-44岁（中年）</SelectItem>
+                  <SelectItem value="45+">45岁以上</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>当地语言</Label>
+              <Select 
+                value={formData.language}
+                onValueChange={(value) => setFormData({ ...formData, language: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择主要语言" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="zh">中文</SelectItem>
+                  <SelectItem value="en">英文</SelectItem>
+                  <SelectItem value="ja">日文</SelectItem>
+                  <SelectItem value="ko">韩文</SelectItem>
+                  <SelectItem value="es">西班牙文</SelectItem>
+                  <SelectItem value="fr">法文</SelectItem>
+                  <SelectItem value="de">德文</SelectItem>
+                  <SelectItem value="pt">葡萄牙文</SelectItem>
+                  <SelectItem value="ar">阿拉伯文</SelectItem>
+                  <SelectItem value="ru">俄文</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label>目标国家/地区</Label>
+            <Label>目标人群</Label>
             <div className="grid grid-cols-3 gap-3">
-              {['中国', '美国', '日本', '韩国', '英国', '德国'].map((country) => (
-                <div key={country} className="flex items-center space-x-2">
+              {AUDIENCE_GROUPS.map((group) => (
+                <div key={group.value} className="flex items-center space-x-2">
                   <Checkbox 
-                    id={country}
-                    checked={formData.countries?.includes(country)}
+                    id={group.value}
+                    checked={formData.audienceGroups?.includes(group.value)}
                     onCheckedChange={(checked) => {
-                      const countries = formData.countries || [];
+                      const groups = formData.audienceGroups || [];
                       if (checked) {
-                        setFormData({ ...formData, countries: [...countries, country] });
+                        setFormData({ ...formData, audienceGroups: [...groups, group.value] });
                       } else {
-                        setFormData({ ...formData, countries: countries.filter((c: string) => c !== country) });
+                        setFormData({ ...formData, audienceGroups: groups.filter((g: string) => g !== group.value) });
                       }
                     }}
                   />
-                  <Label htmlFor={country} className="cursor-pointer">{country}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>目标年龄段</Label>
-            <Select 
-              value={formData.ageGroup}
-              onValueChange={(value) => setFormData({ ...formData, ageGroup: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择年龄段" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="18-24">18-24岁</SelectItem>
-                <SelectItem value="25-34">25-34岁</SelectItem>
-                <SelectItem value="35-44">35-44岁</SelectItem>
-                <SelectItem value="45+">45岁以上</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>兴趣标签</Label>
-            <div className="flex flex-wrap gap-2">
-              {['科技', '美妆', '游戏', '旅行', '美食', '健身', '教育', '财经'].map((tag) => (
-                <Button
-                  key={tag}
-                  type="button"
-                  variant={formData.tags?.includes(tag) ? 'default' : 'secondary'}
-                  size="sm"
-                  onClick={() => {
-                    const tags = formData.tags || [];
-                    if (tags.includes(tag)) {
-                      setFormData({ ...formData, tags: tags.filter((t: string) => t !== tag) });
-                    } else {
-                      setFormData({ ...formData, tags: [...tags, tag] });
-                    }
-                  }}
-                >
-                  {tag}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 4 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>内容类型</Label>
-            <Select 
-              value={formData.contentType}
-              onValueChange={(value) => setFormData({ ...formData, contentType: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择内容类型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="video">短视频</SelectItem>
-                <SelectItem value="image">图文笔记</SelectItem>
-                <SelectItem value="live">直播</SelectItem>
-                <SelectItem value="mixed">混合类型</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>内容主题</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {['产品评测', '使用教程', '好物分享', '干货知识', '生活记录', '互动话题'].map((topic) => (
-                <div key={topic} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={topic}
-                    checked={formData.topics?.includes(topic)}
-                    onCheckedChange={(checked) => {
-                      const topics = formData.topics || [];
-                      if (checked) {
-                        setFormData({ ...formData, topics: [...topics, topic] });
-                      } else {
-                        setFormData({ ...formData, topics: topics.filter((t: string) => t !== topic) });
-                      }
-                    }}
-                  />
-                  <Label htmlFor={topic} className="cursor-pointer">{topic}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {step === 5 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>平台选择</Label>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { name: '抖音', icon: '🎵' },
-                { name: '小红书', icon: '📖' },
-                { name: 'B站', icon: '📺' },
-                { name: '微博', icon: '🌐' },
-                { name: '快手', icon: '🎬' },
-                { name: '视频号', icon: '💬' },
-              ].map((platform) => (
-                <div key={platform.name} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={platform.name}
-                    checked={formData.platforms?.includes(platform.name)}
-                    onCheckedChange={(checked) => {
-                      const platforms = formData.platforms || [];
-                      if (checked) {
-                        setFormData({ ...formData, platforms: [...platforms, platform.name] });
-                      } else {
-                        setFormData({ ...formData, platforms: platforms.filter((p: string) => p !== platform.name) });
-                      }
-                    }}
-                  />
-                  <Label htmlFor={platform.name} className="cursor-pointer">
-                    {platform.icon} {platform.name}
+                  <Label htmlFor={group.value} className="cursor-pointer flex items-center gap-1">
+                    <span>{group.icon}</span>
+                    <span className="text-sm">{group.label}</span>
                   </Label>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 步骤4: 内容策略 */}
+      {step === 4 && (
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <Label>内容策略类型</Label>
+            <div className="grid grid-cols-1 gap-3">
+              {CONTENT_STRATEGIES.map((strategy) => (
+                <div 
+                  key={strategy.value}
+                  className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                    formData.contentStrategy === strategy.value 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-slate-200 hover:border-slate-300'
+                  }`}
+                  onClick={() => setFormData({ ...formData, contentStrategy: strategy.value })}
+                >
+                  <div className="font-medium">{strategy.label}</div>
+                  <div className="text-sm text-slate-500 mt-1">{strategy.description}</div>
+                </div>
+              ))}
+            </div>
+            {recommendations?.contentStrategy && (
+              <div className="p-4 bg-purple-50 rounded-lg">
+                <Label className="text-purple-700 mb-2 block">AI推荐策略</Label>
+                <div className="text-purple-800">
+                  根据您的产品特点，AI推荐使用：
+                  <strong>{recommendations.contentStrategy}</strong>
+                </div>
+                <Button 
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => handleUseRecommendation('contentStrategy', recommendations.contentStrategy)}
+                >
+                  使用AI推荐
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 步骤5: 平台选择 */}
+      {step === 5 && (
+        <div className="space-y-4">
+          <div className="space-y-3">
+            <Label>选择目标平台（AI已根据国家/人群智能匹配）</Label>
+            <Tabs defaultValue="短视频">
+              <TabsList className="grid grid-cols-4">
+                <TabsTrigger value="短视频">短视频</TabsTrigger>
+                <TabsTrigger value="社交">社交网络</TabsTrigger>
+                <TabsTrigger value="即时通讯">即时通讯</TabsTrigger>
+                <TabsTrigger value="社区">社区</TabsTrigger>
+              </TabsList>
+              {['短视频', '社交', '即时通讯', '社区'].map((category) => (
+                <TabsContent key={category} value={category}>
+                  <div className="grid grid-cols-2 gap-3">
+                    {GLOBAL_PLATFORMS.filter(p => p.category.includes(category)).map((platform) => (
+                      <div key={platform.name} className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={platform.name}
+                          checked={formData.platforms?.includes(platform.name)}
+                          onCheckedChange={(checked) => {
+                            const platforms = formData.platforms || [];
+                            if (checked) {
+                              setFormData({ ...formData, platforms: [...platforms, platform.name] });
+                            } else {
+                              setFormData({ ...formData, platforms: platforms.filter((p: string) => p !== platform.name) });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={platform.name} className="cursor-pointer flex items-center gap-2">
+                          <span className="text-xl">{platform.icon}</span>
+                          <div>
+                            <div className="text-sm font-medium">{platform.name}</div>
+                            <div className="text-xs text-slate-400">{platform.region}</div>
+                          </div>
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
           </div>
           {recommendations?.platformCombinations && (
             <div className="p-4 bg-blue-50 rounded-lg">
@@ -483,99 +634,169 @@ function StepContent({
         </div>
       )}
 
+      {/* 步骤6: 账号配置 */}
       {step === 6 && (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>账号数量</Label>
-            <Select 
-              value={formData.accountCount}
-              onValueChange={(value) => setFormData({ ...formData, accountCount: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择账号数量" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1个账号（起步）</SelectItem>
-                <SelectItem value="3">3个账号（推荐）</SelectItem>
-                <SelectItem value="5">5个账号（矩阵）</SelectItem>
-                <SelectItem value="10">10个账号（大规模）</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>账号分层策略</Label>
-            <Select 
-              value={formData.accountStrategy}
-              onValueChange={(value) => setFormData({ ...formData, accountStrategy: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择策略" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="main">主打账号（1个主账号+其他辅助）</SelectItem>
-                <SelectItem value="equal">均衡发展（所有账号同等重要）</SelectItem>
-                <SelectItem value="niche">垂直细分（每个账号专注不同细分领域）</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>账号配置总览</Label>
+              <Badge variant="secondary">
+                平台数 × 国家数 = {formData.platforms?.length || 0} × {formData.countries?.length || 0} = {
+                  Math.min((formData.platforms?.length || 0) * (formData.countries?.length || 0), 50)
+                }个账号（上限50）
+              </Badge>
+            </div>
+
+            {/* 账号分层可视化 */}
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg">
+                <div className="flex items-center justify-between text-white mb-2">
+                  <span className="font-medium">主力账号（60%）</span>
+                  <span className="font-bold text-lg">
+                    {Math.ceil(Math.min((formData.platforms?.length || 0) * (formData.countries?.length || 0), 50) * 0.6)}个
+                  </span>
+                </div>
+                <Progress value={60} className="h-2 bg-blue-300" />
+                <p className="text-blue-100 text-sm mt-2">
+                  核心平台 + 核心国家，高频率发布
+                </p>
+              </div>
+
+              <div className="p-4 bg-gradient-to-r from-slate-400 to-slate-500 rounded-lg">
+                <div className="flex items-center justify-between text-white mb-2">
+                  <span className="font-medium">备用账号（40%）</span>
+                  <span className="font-bold text-lg">
+                    {Math.floor(Math.min((formData.platforms?.length || 0) * (formData.countries?.length || 0), 50) * 0.4)}个
+                  </span>
+                </div>
+                <Progress value={40} className="h-2 bg-slate-300" />
+                <p className="text-slate-100 text-sm mt-2">
+                  辅助平台 + 长尾国家，低频率补充
+                </p>
+              </div>
+            </div>
+
+            {/* 按平台展示 */}
+            <div className="space-y-3">
+              <Label>按平台账号分配</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {(formData.platforms || []).map((platform: string) => (
+                  <Card key={platform}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <span className="text-lg">
+                          {GLOBAL_PLATFORMS.find(p => p.name === platform)?.icon || '📱'}
+                        </span>
+                        {platform}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {(formData.countries || []).length}个国家
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        主力：{Math.ceil((formData.countries || []).length * 0.6)}个
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        备用：{Math.floor((formData.countries || []).length * 0.4)}个
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
 
+      {/* 步骤7: IP检查与启动 */}
       {step === 7 && (
         <div className="space-y-6">
-          <div className="p-6 bg-green-50 rounded-lg text-center">
-            <Globe className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-green-800 mb-2">配置完成！</h3>
-            <p className="text-green-600">检查通过，可以开始你的引流之旅了</p>
+          {/* 9行配置总览表 */}
+          <div className="p-4 bg-slate-50 rounded-lg">
+            <h3 className="font-semibold text-slate-800 mb-4">📊 9行配置总览表</h3>
+            <div className="space-y-2">
+              {[
+                { label: '项目名称', value: allStepData[1]?.projectName || '-' },
+                { label: '产品名称', value: allStepData[2]?.productName || '-' },
+                { label: '目标国家', value: `${(allStepData[3]?.countries || []).length}个国家` },
+                { label: '目标人群', value: `${(allStepData[3]?.audienceGroups || []).length}类人群` },
+                { label: '内容策略', value: CONTENT_STRATEGIES.find(s => s.value === allStepData[4]?.contentStrategy)?.label || '-' },
+                { label: '目标平台', value: `${(allStepData[5]?.platforms || []).length}个平台` },
+                { label: '总账号数', value: Math.min((allStepData[5]?.platforms || []).length * (allStepData[3]?.countries || []).length, 50) + '个账号' },
+                { label: '分层策略', value: '60%主力 + 40%备用' },
+                { label: '状态', value: '准备就绪', status: 'ready' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2 border-b border-slate-200 last:border-0">
+                  <span className="text-slate-600">{item.label}</span>
+                  <span className={`font-medium ${item.status === 'ready' ? 'text-green-600' : 'text-slate-800'}`}>
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">IP检查</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {['中国', '美国', '日本'].map((country) => (
-                    <div key={country} className="flex items-center justify-between">
-                      <span className="text-sm">{country}</span>
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">正常</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">风险评估</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">发布频率</span>
-                    <Badge variant="secondary">适中</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">内容策略</span>
-                    <Badge variant="secondary">安全</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm">账号配置</span>
-                    <Badge variant="secondary">合理</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* 逐国IP检查 */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-slate-800">🌍 逐国IP状态检查</h3>
+            <div className="grid grid-cols-3 gap-3">
+              {(allStepData[3]?.countries || []).map((countryCode: string) => {
+                const country = GLOBAL_COUNTRIES.find(c => c.code === countryCode);
+                // 模拟IP状态
+                const hasIp = Math.random() > 0.3;
+                return (
+                  <Card key={countryCode} className={hasIp ? 'border-green-200' : 'border-red-200'}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{country?.flag}</span>
+                          <span className="text-sm font-medium">{country?.name}</span>
+                        </div>
+                        {hasIp ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-red-500" />
+                        )}
+                      </div>
+                      {!hasIp && (
+                        <Button 
+                          variant="secondary"
+                          size="sm"
+                          className="w-full mt-2 bg-red-50 text-red-700 hover:bg-red-100"
+                        >
+                          前往设置
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-medium text-blue-800 mb-2">AI建议</h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• 建议前3天每天发布1-2篇，观察效果后再增加频率</li>
-              <li>• 注意各平台内容差异化，避免完全重复</li>
-              <li>• 关注数据反馈，及时调整内容策略</li>
-            </ul>
+          {/* 检查通过状态 */}
+          <div className={`p-6 rounded-lg text-center ${
+            (allStepData[3]?.countries || []).every((c: string) => Math.random() > 0.3)
+              ? 'bg-green-50'
+              : 'bg-yellow-50'
+          }`}>
+            {(allStepData[3]?.countries || []).every((c: string) => Math.random() > 0.3) ? (
+              <>
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-green-800 mb-2">全部就绪！</h3>
+                <p className="text-green-600">所有国家IP检查通过，可以启动</p>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-yellow-800 mb-2">部分IP缺失</h3>
+                <p className="text-yellow-600 mb-4">请先完成IP配置，或选择跳过直接启动</p>
+                <Button variant="secondary" className="mr-2">
+                  跳过IP检查
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -600,8 +821,13 @@ function StepContent({
             {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
           </Button>
         ) : (
-          <Button type="button" onClick={onStart} disabled={isLoading} className="bg-green-600 hover:bg-green-700">
-            {isLoading ? '启动中...' : '一键启动'}
+          <Button 
+            type="button" 
+            onClick={onStart} 
+            disabled={isLoading} 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {isLoading ? '启动中...' : '一键启动全球引流'}
             {!isLoading && <PlayCircle className="w-4 h-4 ml-2" />}
           </Button>
         )}
