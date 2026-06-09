@@ -16,6 +16,8 @@ import {
   Wand2,
   ListTodo,
   Users,
+  FileText,
+  Shield,
 } from "lucide-react";
 
 const navigation = [
@@ -131,6 +133,22 @@ export function Sidebar() {
               <HelpCircle className="h-4 w-4" />
               帮助与教程
             </Link>
+            <div className="mt-2 space-y-1">
+              <Link
+                href="/terms"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50"
+              >
+                <FileText className="h-4 w-4" />
+                Terms of Service
+              </Link>
+              <Link
+                href="/privacy"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50"
+              >
+                <Shield className="h-4 w-4" />
+                Privacy Policy
+              </Link>
+            </div>
             <div className="mt-3 px-3 py-2 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-600 font-medium">小白模式已启用</p>
               <p className="text-xs text-blue-500">智能引导，零代码操作</p>
