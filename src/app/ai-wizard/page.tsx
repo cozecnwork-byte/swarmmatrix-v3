@@ -219,8 +219,8 @@ export default function GlobalAIWizard() {
             <div className="flex items-center gap-3">
               <Sparkles className="w-8 h-8 text-blue-500" />
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">全球矩阵引流向导</h1>
-                <p className="text-sm text-slate-500">7步创建你的专属全球引流方案</p>
+                <h1 className="text-2xl font-bold text-slate-900">AI创建引流任务</h1>
+                <p className="text-sm text-slate-500">7步完成所有配置：智能体、工作流、定时任务、一键发布，全自动执行</p>
               </div>
             </div>
             <div className="text-sm text-slate-500">
