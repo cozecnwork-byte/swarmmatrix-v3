@@ -15,7 +15,15 @@ import {
   Settings,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Upload,
+  Image,
+  Video,
+  Music,
+  FileText,
+  Link,
+  Plus,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -468,6 +476,11 @@ function GlobalAIWizardContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [projectId, setProjectId] = useState<string>('');
   const [aiRecommendations, setAiRecommendations] = useState<any>(null);
+  
+  // 文件和链接输入
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [urls, setUrls] = useState<string[]>([]);
+  const [urlInput, setUrlInput] = useState('');
 
   const progress = (currentStep / STEPS.length) * 100;
 
@@ -545,20 +558,31 @@ function GlobalAIWizardContent() {
 
   // 一键优化
   const handleOneClickOptimize = async () => {
-    if (!simpleInput.trim()) {
-      toast.error('请先输入你的产品或项目描述');
+    if (!simpleInput.trim() && uploadedFiles.length === 0 && urls.length === 0) {
+      toast.error('请至少输入描述、上传文件或添加链接');
       return;
     }
 
     setIsLoading(true);
     try {
+      // 构建请求数据
+      const requestData: any = {
+        simpleInput: simpleInput.trim(),
+        files: uploadedFiles.map(file => ({
+          name: file.name,
+          type: file.type,
+          size: file.size
+        })),
+        urls: urls
+      };
+
       const response = await fetch('/api/ai-wizard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: 'current-user',
           action: 'oneClickOptimize',
-          data: { simpleInput: simpleInput.trim() },
+          data: requestData,
         }),
       });
 
@@ -681,26 +705,130 @@ function GlobalAIWizardContent() {
               </div>
 
               {/* 输入区域 */}
-              <div className="space-y-4">
+              <div className="space-y-6">
+                {/* 文本描述 */}
                 <div className="space-y-2">
-                  <Label className="text-lg font-medium">描述你的产品或项目</Label>
+                  <Label className="text-lg font-medium">📝 描述你的产品或项目</Label>
                   <Textarea
                     placeholder="例如：2024新款蓝牙耳机，音质好续航长，主打年轻人群，想做全球推广..."
                     value={simpleInput}
                     onChange={(e) => setSimpleInput(e.target.value)}
-                    rows={6}
+                    rows={4}
                     className="text-base"
                   />
                   <p className="text-sm text-slate-500">
                     💡 提示：描述越详细，AI推荐越精准
                   </p>
                 </div>
+                
+                {/* 文件上传 */}
+                <div className="space-y-2">
+                  <Label className="text-lg font-medium">📁 上传产品图片/视频/文档</Label>
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv"
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          setUploadedFiles([...uploadedFiles, ...Array.from(e.target.files)]);
+                        }
+                      }}
+                      className="hidden"
+                      id="file-upload"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <Upload className="w-12 h-12 mx-auto text-slate-400 mb-2" />
+                      <p className="text-slate-600">点击或拖拽上传文件</p>
+                      <p className="text-sm text-slate-400 mt-1">
+                        支持：图片、视频、音频、PDF、Office文档
+                      </p>
+                    </label>
+                  </div>
+                  {/* 已上传文件列表 */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="space-y-2">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            {file.type.startsWith('image/') ? (
+                              <Image className="w-4 h-4 text-blue-500" />
+                            ) : file.type.startsWith('video/') ? (
+                              <Video className="w-4 h-4 text-purple-500" />
+                            ) : file.type.startsWith('audio/') ? (
+                              <Music className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <FileText className="w-4 h-4 text-slate-500" />
+                            )}
+                            <span className="text-sm">{file.name}</span>
+                            <span className="text-xs text-slate-400">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                          </div>
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* 链接输入 */}
+                <div className="space-y-2">
+                  <Label className="text-lg font-medium">🔗 添加项目相关链接</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="输入网页链接、产品介绍链接等..."
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && urlInput.trim()) {
+                          setUrls([...urls, urlInput.trim()]);
+                          setUrlInput('');
+                        }
+                      }}
+                    />
+                    <Button 
+                      onClick={() => {
+                        if (urlInput.trim()) {
+                          setUrls([...urls, urlInput.trim()]);
+                          setUrlInput('');
+                        }
+                      }}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {/* 已添加链接列表 */}
+                  {urls.length > 0 && (
+                    <div className="space-y-2">
+                      {urls.map((url, index) => (
+                        <div key={index} className="flex items-center justify-between bg-slate-50 p-3 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Link className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm truncate max-w-md">{url}</span>
+                          </div>
+                          <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setUrls(urls.filter((_, i) => i !== index))}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* 一键优化按钮 */}
                 <Button
                   className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                   onClick={handleOneClickOptimize}
-                  disabled={isLoading || !simpleInput.trim()}
+                  disabled={isLoading || (!simpleInput.trim() && uploadedFiles.length === 0 && urls.length === 0)}
                 >
                   {isLoading ? (
                     <>
