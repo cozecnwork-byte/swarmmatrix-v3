@@ -99,14 +99,15 @@ export async function POST(request: Request) {
     const supabase = getSupabaseClient();
 
     // AI一键优化
-    if (action === 'ai-optimize' && simpleInput) {
-      const optimized = generateOptimizedDescription(simpleInput);
-      const recommendations = getSmartRecommendations(simpleInput);
+    const inputToUse = simpleInput || (data && data.simpleInput);
+    if ((action === 'ai-optimize' || action === 'oneClickOptimize') && inputToUse) {
+      const optimized = generateOptimizedDescription(inputToUse);
+      const recommendations = getSmartRecommendations(inputToUse);
       
       return NextResponse.json({
         success: true,
         data: {
-          original: simpleInput,
+          original: inputToUse,
           optimized,
           recommendations,
           projectId: `project_${Date.now()}`
