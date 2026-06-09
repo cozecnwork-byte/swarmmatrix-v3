@@ -36,9 +36,14 @@ export interface TaskState {
 }
 
 export class MemoryLayer {
-  private supabase = getSupabaseClient();
+  private supabase: ReturnType<typeof getSupabaseClient>;
   private shortTermCache: Map<string, ConversationMessage[]> = new Map();
   private workingMemory: Map<string, TaskState> = new Map();
+
+  constructor() {
+    // 延迟初始化supabase客户端
+    this.supabase = getSupabaseClient();
+  }
 
   /**
    * 添加对话消息（短期记忆）

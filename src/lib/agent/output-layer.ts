@@ -33,7 +33,12 @@ export interface ChartData {
 }
 
 export class OutputLayer {
-  private supabase = getSupabaseClient();
+  private supabase: ReturnType<typeof getSupabaseClient>;
+
+  constructor() {
+    // 延迟初始化supabase客户端
+    this.supabase = getSupabaseClient();
+  }
 
   /**
    * 生成自然语言回复

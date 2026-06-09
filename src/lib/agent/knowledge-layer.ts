@@ -29,11 +29,13 @@ export interface KnowledgeEntry {
 }
 
 export class KnowledgeLayer {
-  private supabase = getSupabaseClient();
+  private supabase: ReturnType<typeof getSupabaseClient>;
   private knowledgeClient: KnowledgeClient;
   private dataSources: Map<string, DataSource> = new Map();
 
   constructor() {
+    // 延迟初始化supabase客户端
+    this.supabase = getSupabaseClient();
     const config = new Config();
     this.knowledgeClient = new KnowledgeClient(config);
     this.initializeDataSources();

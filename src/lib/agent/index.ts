@@ -41,7 +41,7 @@ export interface StepResult {
 
 export class Agent {
   private config: AgentConfig;
-  private supabase = getSupabaseClient();
+  private supabase: ReturnType<typeof getSupabaseClient>;
 
   constructor(config: AgentConfig) {
     this.config = {
@@ -50,6 +50,8 @@ export class Agent {
       timeout: 300000, // 5分钟
       ...config,
     };
+    // 延迟初始化supabase客户端，避免构建时环境变量检查
+    this.supabase = getSupabaseClient();
   }
 
   /**
