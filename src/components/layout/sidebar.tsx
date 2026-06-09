@@ -19,6 +19,9 @@ import {
   Menu,
   X,
   Zap,
+  Wand2,
+  Sparkles,
+  MessageSquare,
 } from "lucide-react";
 
 const navigation = [
@@ -27,6 +30,24 @@ const navigation = [
     href: "/dashboard",
     icon: LayoutDashboard,
     description: "系统概览与快速操作",
+  },
+  {
+    name: "AI创建向导",
+    href: "/ai-wizard",
+    icon: Wand2,
+    description: "7步智能创建引流项目",
+  },
+  {
+    name: "智能优化",
+    href: "/smart-optimize",
+    icon: Sparkles,
+    description: "AI自动规划和优化方案",
+  },
+  {
+    name: "AI助手",
+    href: "/ai-assistant",
+    icon: MessageSquare,
+    description: "实时AI客服与帮助",
   },
   {
     name: "智能体",

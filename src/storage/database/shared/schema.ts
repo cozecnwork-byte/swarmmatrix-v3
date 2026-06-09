@@ -407,3 +407,145 @@ export const systemLogs = pgTable(
     index("system_logs_created_at_idx").on(table.created_at),
   ]
 );
+
+// ========== AI向导项目表 ==========
+export const aiWizardProjects = pgTable(
+  "ai_wizard_projects",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    user_id: varchar("user_id", { length: 36 }).notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    description: text("description"),
+    // 当前步骤
+    current_step: integer("current_step").default(1),
+    // 状态
+    status: varchar("status", { length: 20 }).default("draft"), // draft, active, paused, completed
+    // 步骤数据
+    step1_data: jsonb("step1_data"), // 基础信息
+    step2_data: jsonb("step2_data"), // 产品信息
+    step3_data: jsonb("step3_data"), // 目标客户
+    step4_data: jsonb("step4_data"), // 内容策略
+    step5_data: jsonb("step5_data"), // 平台选择
+    step6_data: jsonb("step6_data"), // 账号配置
+    step7_data: jsonb("step7_data"), // IP检查
+    // AI生成的推荐
+    ai_recommendations: jsonb("ai_recommendations"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("ai_wizard_projects_user_id_idx").on(table.user_id),
+    index("ai_wizard_projects_status_idx").on(table.status),
+  ]
+);
+
+// ========== AI客服对话表 ==========
+export const aiAssistantConversations = pgTable(
+  "ai_assistant_conversations",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    user_id: varchar("user_id", { length: 36 }).notNull(),
+    title: varchar("title", { length: 200 }),
+    context_type: varchar("context_type", { length: 50 }), // general, troubleshooting, tutorial, optimization
+    is_active: boolean("is_active").default(true),
+    last_message_at: timestamp("last_message_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("ai_assistant_conversations_user_id_idx").on(table.user_id),
+    index("ai_assistant_conversations_is_active_idx").on(table.is_active),
+    index("ai_assistant_conversations_context_type_idx").on(table.context_type),
+  ]
+);
+
+// ========== AI客服消息表 ==========
+export const aiAssistantMessages = pgTable(
+  "ai_assistant_messages",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    conversation_id: varchar("conversation_id", { length: 36 }).notNull(),
+    role: varchar("role", { length: 20 }).notNull(), // user, assistant, system
+    content: text("content").notNull(),
+    // 消息类型
+    message_type: varchar("message_type", { length: 50 }).default("text"), // text, suggestion, error, confirmation
+    // 相关操作
+    actions: jsonb("actions"), // 快捷操作按钮
+    // 解决的问题
+    resolved_issue: jsonb("resolved_issue"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("ai_assistant_messages_conversation_id_idx").on(table.conversation_id),
+    index("ai_assistant_messages_created_at_idx").on(table.created_at),
+  ]
+);
+
+// ========== 预设场景模板表 ==========
+export const presetScenarios = pgTable(
+  "preset_scenarios",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    name: varchar("name", { length: 200 }).notNull(),
+    description: text("description").notNull(),
+    category: varchar("category", { length: 50 }).notNull(), // growth, sales, brand, community
+    // 场景配置
+    config: jsonb("config").notNull(),
+    // AI生成的说明
+    ai_guide: text("ai_guide"),
+    // 是否启用
+    is_active: boolean("is_active").default(true),
+    // 使用统计
+    use_count: integer("use_count").default(0),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("preset_scenarios_category_idx").on(table.category),
+    index("preset_scenarios_is_active_idx").on(table.is_active),
+  ]
+);
+
+// ========== 智能优化任务表 ==========
+export const smartOptimizationTasks = pgTable(
+  "smart_optimization_tasks",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    user_id: varchar("user_id", { length: 36 }).notNull(),
+    project_id: varchar("project_id", { length: 36 }),
+    // 用户目标
+    user_goal: text("user_goal").notNull(),
+    // AI生成的方案
+    optimization_plan: jsonb("optimization_plan"),
+    // 执行状态
+    status: varchar("status", { length: 20 }).default("pending"), // pending, planning, executing, completed, failed
+    // 执行结果
+    results: jsonb("results"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("smart_optimization_tasks_user_id_idx").on(table.user_id),
+    index("smart_optimization_tasks_project_id_idx").on(table.project_id),
+    index("smart_optimization_tasks_status_idx").on(table.status),
+  ]
+);
