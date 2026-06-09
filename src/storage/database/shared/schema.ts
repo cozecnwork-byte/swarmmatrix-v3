@@ -21,6 +21,164 @@ export const healthCheck = pgTable("health_check", {
   }).defaultNow(),
 });
 
+// ========== 矩阵账号类型表 ==========
+export const matrixAccountTypes = pgTable(
+  "matrix_account_types",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    platform: varchar("platform", { length: 50 }).notNull(),
+    // 账号类型：brand（品牌号）、persona（人设号）、influencer（达人号）、lead_gen（引流号）
+    account_type: varchar("account_type", { length: 30 }).notNull(),
+    account_name: varchar("account_name", { length: 100 }).notNull(),
+    // 账号定位描述
+    positioning: text("positioning"),
+    // 内容策略
+    content_strategy: jsonb("content_strategy"),
+    // 增长目标
+    growth_targets: jsonb("growth_targets"),
+    // 层级：primary（主力60%）、secondary（备用40%）
+    tier: varchar("tier", { length: 20 }).default("secondary"),
+    is_active: boolean("is_active").default(true),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("matrix_account_types_project_id_idx").on(table.project_id),
+    index("matrix_account_types_platform_idx").on(table.platform),
+    index("matrix_account_types_account_type_idx").on(table.account_type),
+  ]
+);
+
+// ========== 内容策略表（首图设计、标题撰写、内容优化） ==========
+export const contentStrategies = pgTable(
+  "content_strategies",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    content_id: varchar("content_id", { length: 36 }),
+    // 首图设计
+    cover_image_strategy: jsonb("cover_image_strategy"),
+    // 标题撰写策略
+    title_strategy: jsonb("title_strategy"),
+    // 内容选择策略
+    content_selection: jsonb("content_selection"),
+    // 内容优化策略
+    content_optimization: jsonb("content_optimization"),
+    // A/B测试配置
+    ab_test_config: jsonb("ab_test_config"),
+    // 效果评估
+    performance_metrics: jsonb("performance_metrics"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("content_strategies_project_id_idx").on(table.project_id),
+  ]
+);
+
+// ========== 矩阵账号布局表（品牌专业号、KOL/KOC达人号、店员小号） ==========
+export const matrixAccountLayouts = pgTable(
+  "matrix_account_layouts",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 布局类型：brand_professional（品牌专业号）、kol_koc（KOL/KOC达人号）、store_clerk（店员小号）
+    layout_type: varchar("layout_type", { length: 30 }).notNull(),
+    // 账号分组
+    account_groups: jsonb("account_groups"),
+    // 定位策略
+    positioning_strategy: jsonb("positioning_strategy"),
+    // 影响力策略
+    influence_strategy: jsonb("influence_strategy"),
+    // 互动策略
+    engagement_strategy: jsonb("engagement_strategy"),
+    // 客户服务策略
+    customer_service_strategy: jsonb("customer_service_strategy"),
+    is_active: boolean("is_active").default(true),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("matrix_account_layouts_project_id_idx").on(table.project_id),
+    index("matrix_account_layouts_layout_type_idx").on(table.layout_type),
+  ]
+);
+
+// ========== 品牌形象保护表 ==========
+export const brandProtections = pgTable(
+  "brand_protections",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 保护类型：image（形象保护）、reputation（声誉保护）、copyright（版权保护）
+    protection_type: varchar("protection_type", { length: 30 }).notNull(),
+    // 保护规则
+    protection_rules: jsonb("protection_rules"),
+    // 监控关键词
+    monitoring_keywords: jsonb("monitoring_keywords"),
+    // 告警配置
+    alert_config: jsonb("alert_config"),
+    // 违规记录
+    violation_records: jsonb("violation_records"),
+    // 一致性检查
+    consistency_checks: jsonb("consistency_checks"),
+    is_active: boolean("is_active").default(true),
+    last_check_at: timestamp("last_check_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("brand_protections_project_id_idx").on(table.project_id),
+    index("brand_protections_protection_type_idx").on(table.protection_type),
+  ]
+);
+
+// ========== 矩阵运营4个注意点表（定位清晰、内容质量、数据分析、品牌保护） ==========
+export const matrixOperationChecklists = pgTable(
+  "matrix_operation_checklists",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 检查项：positioning（定位清晰）、content_quality（内容质量）、data_analysis（数据分析）、brand_protection（品牌保护）
+    checklist_item: varchar("checklist_item", { length: 50 }).notNull(),
+    // 检查状态：pending, passed, failed, needs_improvement
+    status: varchar("status", { length: 30 }).default("pending"),
+    // 检查结果
+    check_results: jsonb("check_results"),
+    // 改进建议
+    improvement_suggestions: text("improvement_suggestions"),
+    // 上次检查时间
+    last_checked_at: timestamp("last_checked_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("matrix_operation_checklists_project_id_idx").on(table.project_id),
+    index("matrix_operation_checklists_checklist_item_idx").on(table.checklist_item),
+  ]
+);
+
 // ========== 用户配置表 ==========
 export const userConfigs = pgTable(
   "user_configs",
