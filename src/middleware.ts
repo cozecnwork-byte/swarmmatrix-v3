@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// TikTok验证文件内容
-const TIKTOK_VERIFICATION_FILE = 'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt';
+// TikTok验证文件配置 - 支持多个文件名
+const TIKTOK_VERIFICATION_FILES = [
+  'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
+  'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt',
+];
 const TIKTOK_VERIFICATION_CONTENT = 'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 处理TikTok验证文件请求
-  if (pathname === `/${TIKTOK_VERIFICATION_FILE}`) {
+  if (TIKTOK_VERIFICATION_FILES.some(file => pathname === `/${file}`)) {
     return new NextResponse(TIKTOK_VERIFICATION_CONTENT, {
       status: 200,
       headers: {
@@ -29,5 +32,6 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
+    '/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt',
   ],
 };
