@@ -460,6 +460,9 @@ function StepContent({
 }
 
 function GlobalAIWizardContent() {
+  const [mode, setMode] = useState<'simple' | 'advanced'>('simple'); // 默认简单模式
+  const [simpleInput, setSimpleInput] = useState('');
+  const [optimizedData, setOptimizedData] = useState<any>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [stepData, setStepData] = useState<Record<number, any>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -540,10 +543,92 @@ function GlobalAIWizardContent() {
     }
   };
 
+  // 一键优化
+  const handleOneClickOptimize = async () => {
+    if (!simpleInput.trim()) {
+      toast.error('请先输入你的产品或项目描述');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/ai-wizard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 'current-user',
+          action: 'oneClickOptimize',
+          data: { simpleInput: simpleInput.trim() },
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setOptimizedData(result.data);
+        toast.success('🎉 AI智能优化完成！已为你匹配最佳方案');
+      }
+    } catch (error) {
+      toast.error('优化失败，请重试');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 应用优化方案
+  const applyOptimizedData = () => {
+    if (!optimizedData) return;
+
+    // 将优化数据填充到各步骤
+    const newStepData: Record<number, any> = {
+      1: {
+        projectName: optimizedData.projectName,
+        description: optimizedData.description,
+      },
+      2: {
+        productName: optimizedData.productName,
+        productSellingPoints: optimizedData.productSellingPoints?.join('\n') || '',
+      },
+      3: {
+        countries: optimizedData.countries || [],
+        audienceGroups: optimizedData.audienceGroups || [],
+        languages: optimizedData.languages || [],
+      },
+      4: {
+        contentStrategy: optimizedData.contentStrategy,
+        contentTypes: optimizedData.contentTypes,
+        postingFrequency: optimizedData.postingFrequency,
+      },
+      5: {
+        platforms: optimizedData.platforms || [],
+        platformCombinations: optimizedData.platformCombinations,
+      },
+      6: {
+        mainAccounts: optimizedData.mainAccounts,
+        backupAccounts: optimizedData.backupAccounts,
+      },
+      7: {
+        ipCheck: 'auto',
+      },
+    };
+
+    setStepData(newStepData);
+    setAiRecommendations({ optimizedData });
+    toast.success('✅ 优化方案已应用！你可以查看各步骤详情或直接启动');
+  };
+
   // 启动项目
   const startProject = async () => {
     setIsLoading(true);
     try {
+      // 如果是简单模式，先用优化数据创建项目
+      if (mode === 'simple' && optimizedData && !projectId) {
+        await createProject({
+          projectName: optimizedData.projectName,
+          description: optimizedData.description,
+        });
+        return;
+      }
+
       const response = await fetch('/api/ai-wizard', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -567,8 +652,257 @@ function GlobalAIWizardContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
-      {/* 顶部进度条 */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
+      {/* 模式选择 - 简单模式/高级模式 */}
+      {!optimizedData && mode === 'simple' && (
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <Card className="shadow-xl">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-8 h-8 text-blue-500" />
+                <div>
+                  <CardTitle className="text-2xl font-bold">AI一键优化 + 智能匹配</CardTitle>
+                  <CardDescription>
+                    只需输入简单描述，AI自动为你匹配最佳方案
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              {/* 模式切换 */}
+              <div className="flex justify-end">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  onClick={() => setMode('advanced')}
+                >
+                  切换到高级模式（7步配置）
+                </Button>
+              </div>
+
+              {/* 输入区域 */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-lg font-medium">描述你的产品或项目</Label>
+                  <Textarea
+                    placeholder="例如：2024新款蓝牙耳机，音质好续航长，主打年轻人群，想做全球推广..."
+                    value={simpleInput}
+                    onChange={(e) => setSimpleInput(e.target.value)}
+                    rows={6}
+                    className="text-base"
+                  />
+                  <p className="text-sm text-slate-500">
+                    💡 提示：描述越详细，AI推荐越精准
+                  </p>
+                </div>
+
+                {/* 一键优化按钮 */}
+                <Button
+                  className="w-full h-12 text-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+                  onClick={handleOneClickOptimize}
+                  disabled={isLoading || !simpleInput.trim()}
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      AI智能分析中...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      一键优化 + 智能匹配
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* 优化前后对比示例 */}
+              <div className="grid md:grid-cols-2 gap-4 pt-4">
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                  <div className="flex items-center gap-2 text-slate-500 mb-2">
+                    <XCircle className="w-4 h-4" />
+                    <span className="font-medium">优化前</span>
+                  </div>
+                  <p className="text-sm text-slate-600">
+                    {simpleInput || "你的简单描述..."}
+                  </p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center gap-2 text-green-600 mb-2">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="font-medium">优化后</span>
+                  </div>
+                  <p className="text-sm text-green-700">
+                    智能识别产品类型 → 推荐目标市场 → 匹配最佳平台 → 生成完整方案
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 优化结果展示 */}
+      {optimizedData && mode === 'simple' && (
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <Card className="shadow-xl">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <Sparkles className="w-8 h-8 text-green-500" />
+                  <div>
+                    <CardTitle className="text-2xl font-bold">🎉 AI优化方案已生成</CardTitle>
+                    <CardDescription>
+                      基于你的输入，AI已智能匹配最佳方案
+                    </CardDescription>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => {
+                      setOptimizedData(null);
+                      setStepData({});
+                      setAiRecommendations(null);
+                    }}
+                  >
+                    重新输入
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => setMode('advanced')}
+                  >
+                    查看详细配置
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            
+            <CardContent className="space-y-6">
+              {/* AI分析说明 */}
+              {optimizedData.analysis && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="w-5 h-5 text-purple-500 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-purple-800">AI智能分析</h4>
+                      <p className="text-sm text-purple-700 mt-1">
+                        {optimizedData.analysis.reasoning}
+                      </p>
+                      <Badge className="mt-2 bg-purple-100 text-purple-700">
+                        产品类型：{optimizedData.analysis.productType}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 方案概览卡片 */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600">📍 目标市场</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {optimizedData.countries?.map((country: string) => (
+                        <Badge key={country} variant="secondary">
+                          {country}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600">🎯 目标人群</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {optimizedData.audienceGroups?.map((group: string) => (
+                        <Badge key={group} variant="secondary">
+                          {group}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600">🌐 推荐平台</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {optimizedData.platforms?.map((platform: string) => (
+                        <Badge key={platform} className="bg-blue-100 text-blue-700">
+                          {platform}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600">📊 账号配置</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-1 text-sm">
+                      <p>主力账号：<span className="font-semibold">{optimizedData.mainAccounts}</span> 个</p>
+                      <p>备用账号：<span className="font-semibold">{optimizedData.backupAccounts}</span> 个</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* 产品卖点 */}
+              {optimizedData.productSellingPoints && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium text-slate-600">✨ 核心卖点</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {optimizedData.productSellingPoints.map((point: string, index: number) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* 操作按钮 */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  className="flex-1 h-12 text-lg bg-green-600 hover:bg-green-700"
+                  onClick={applyOptimizedData}
+                >
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  应用此方案
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="h-12"
+                  onClick={() => setMode('advanced')}
+                >
+                  手动调整配置
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* 高级模式 - 7步配置 */}
+      {(mode === 'advanced' || (optimizedData && Object.keys(stepData).length > 0)) && (
+        <>
+          {/* 顶部进度条 */}
+          <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -654,6 +988,8 @@ function GlobalAIWizardContent() {
           </CardContent>
         </Card>
       </div>
+      </>
+    )}
     </div>
   );
 }
