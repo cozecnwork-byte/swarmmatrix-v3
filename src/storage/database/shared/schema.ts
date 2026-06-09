@@ -549,3 +549,339 @@ export const smartOptimizationTasks = pgTable(
     index("smart_optimization_tasks_status_idx").on(table.status),
   ]
 );
+
+// ========== 矩阵引流项目表 ==========
+export const matrixLeadGenProjects = pgTable(
+  "matrix_lead_gen_projects",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    user_id: varchar("user_id", { length: 36 }).notNull(),
+    name: varchar("name", { length: 200 }).notNull(),
+    description: text("description"),
+    // 当前执行阶段（1-6步矩阵引流流程）
+    current_phase: integer("current_phase").default(1),
+    // 项目状态：draft, active, paused, completed, reviewing
+    status: varchar("status", { length: 20 }).default("draft"),
+    // 阶段1：选主平台
+    phase1_data: jsonb("phase1_data"),
+    // 阶段2：定账号角色
+    phase2_data: jsonb("phase2_data"),
+    // 阶段3：做内容排期
+    phase3_data: jsonb("phase3_data"),
+    // 阶段4：安排互动任务
+    phase4_data: jsonb("phase4_data"),
+    // 阶段5：设计承接入口
+    phase5_data: jsonb("phase5_data"),
+    // 阶段6：每周复盘
+    phase6_data: jsonb("phase6_data"),
+    // AI生成的推荐方案
+    ai_recommendations: jsonb("ai_recommendations"),
+    // 执行统计
+    execution_stats: jsonb("execution_stats"),
+    // 试点验证
+    is_pilot: boolean("is_pilot").default(false),
+    pilot_period_days: integer("pilot_period_days").default(28),
+    started_at: timestamp("started_at", { withTimezone: true }),
+    completed_at: timestamp("completed_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("matrix_lead_gen_projects_user_id_idx").on(table.user_id),
+    index("matrix_lead_gen_projects_status_idx").on(table.status),
+    index("matrix_lead_gen_projects_current_phase_idx").on(table.current_phase),
+    index("matrix_lead_gen_projects_created_at_idx").on(table.created_at),
+  ]
+);
+
+// ========== 平台角色表 ==========
+export const platformRoles = pgTable(
+  "platform_roles",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    platform: varchar("platform", { length: 50 }).notNull(),
+    // 平台角色：reach（触达入口）、trust（信任建设）、engagement（互动沉淀）、conversion（线索承接）
+    role: varchar("role", { length: 30 }).notNull(),
+    // 优先级：primary（主平台）、secondary（辅助平台）
+    priority: varchar("priority", { length: 20 }).default("secondary"),
+    // 账号配置
+    account_config: jsonb("account_config"),
+    // 内容策略
+    content_strategy: jsonb("content_strategy"),
+    // KPI目标
+    kpi_targets: jsonb("kpi_targets"),
+    // 状态
+    is_active: boolean("is_active").default(true),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("platform_roles_project_id_idx").on(table.project_id),
+    index("platform_roles_platform_idx").on(table.platform),
+    index("platform_roles_role_idx").on(table.role),
+  ]
+);
+
+// ========== 账号角色分组表 ==========
+export const accountGroups = pgTable(
+  "account_groups",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    platform: varchar("platform", { length: 50 }).notNull(),
+    group_name: varchar("group_name", { length: 100 }).notNull(),
+    // 分组类型：market（市场）、content（内容方向）、product（产品线）、stage（客户阶段）
+    group_type: varchar("group_type", { length: 30 }).notNull(),
+    // 账号列表
+    account_ids: jsonb("account_ids"),
+    // 策略配置
+    strategy_config: jsonb("strategy_config"),
+    is_active: boolean("is_active").default(true),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("account_groups_project_id_idx").on(table.project_id),
+    index("account_groups_platform_idx").on(table.platform),
+    index("account_groups_group_type_idx").on(table.group_type),
+  ]
+);
+
+// ========== 内容排期表 ==========
+export const contentSchedules = pgTable(
+  "content_schedules",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 主题
+    theme: varchar("theme", { length: 200 }).notNull(),
+    // 内容形式：short_video（短视频）、image_text（图文）、case（案例）、qa（问答）、tutorial（教程）
+    content_formats: jsonb("content_formats").notNull(),
+    // 平台分配
+    platform_allocation: jsonb("platform_allocation"),
+    // 发布排期
+    publish_schedule: jsonb("publish_schedule"),
+    // 素材准备
+    materials: jsonb("materials"),
+    // AI生成的内容建议
+    ai_content_suggestions: jsonb("ai_content_suggestions"),
+    // 状态：draft, scheduled, publishing, completed
+    status: varchar("status", { length: 20 }).default("draft"),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("content_schedules_project_id_idx").on(table.project_id),
+    index("content_schedules_status_idx").on(table.status),
+    index("content_schedules_created_at_idx").on(table.created_at),
+  ]
+);
+
+// ========== 互动任务表 ==========
+export const engagementTasks = pgTable(
+  "engagement_tasks",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 任务类型：comment（评论）、direct_message（私信）、like（点赞）、share（转发）、collect（收藏）
+    task_type: varchar("task_type", { length: 30 }).notNull(),
+    // 目标平台
+    platform: varchar("platform", { length: 50 }).notNull(),
+    // 目标账号
+    target_accounts: jsonb("target_accounts"),
+    // 跟进规则
+    follow_up_rules: jsonb("follow_up_rules"),
+    // 优先级
+    priority: varchar("priority", { length: 20 }).default("medium"),
+    // 分配给
+    assigned_to: varchar("assigned_to", { length: 36 }),
+    // 状态：pending, in_progress, completed, failed
+    status: varchar("status", { length: 20 }).default("pending"),
+    // 执行结果
+    results: jsonb("results"),
+    scheduled_at: timestamp("scheduled_at", { withTimezone: true }),
+    started_at: timestamp("started_at", { withTimezone: true }),
+    completed_at: timestamp("completed_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("engagement_tasks_project_id_idx").on(table.project_id),
+    index("engagement_tasks_task_type_idx").on(table.task_type),
+    index("engagement_tasks_platform_idx").on(table.platform),
+    index("engagement_tasks_status_idx").on(table.status),
+    index("engagement_tasks_scheduled_at_idx").on(table.scheduled_at),
+  ]
+);
+
+// ========== 线索承接入口表 ==========
+export const leadCapturePoints = pgTable(
+  "lead_capture_points",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 承接入口类型：form（表单）、whatsapp（WhatsApp）、private_domain（私域）、crm（CRM）、consultation（咨询页）
+    capture_type: varchar("capture_type", { length: 30 }).notNull(),
+    // 来源平台
+    source_platform: varchar("source_platform", { length: 50 }).notNull(),
+    // 入口配置
+    entry_config: jsonb("entry_config"),
+    // 引导文案
+    guide_text: text("guide_text"),
+    // 转化跟踪
+    tracking_config: jsonb("tracking_config"),
+    is_active: boolean("is_active").default(true),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("lead_capture_points_project_id_idx").on(table.project_id),
+    index("lead_capture_points_capture_type_idx").on(table.capture_type),
+    index("lead_capture_points_source_platform_idx").on(table.source_platform),
+  ]
+);
+
+// ========== 线索表 ==========
+export const leads = pgTable(
+  "leads",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 来源信息
+    source_platform: varchar("source_platform", { length: 50 }).notNull(),
+    source_content: varchar("source_content", { length: 500 }),
+    source_engagement: varchar("source_engagement", { length: 50 }), // comment, dm, etc.
+    // 客户信息
+    customer_info: jsonb("customer_info"),
+    // 联系方式
+    contact_info: jsonb("contact_info"),
+    // 需求描述
+    requirements: text("requirements"),
+    // 线索质量评分（0-100）
+    quality_score: integer("quality_score"),
+    // 线索阶段：new, contacted, qualified, proposal, closing, won, lost
+    stage: varchar("stage", { length: 20 }).default("new"),
+    // 分配给
+    assigned_to: varchar("assigned_to", { length: 36 }),
+    // 标签
+    tags: jsonb("tags"),
+    // 跟进记录
+    follow_ups: jsonb("follow_ups"),
+    // 承接入口
+    capture_point_id: varchar("capture_point_id", { length: 36 }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("leads_project_id_idx").on(table.project_id),
+    index("leads_source_platform_idx").on(table.source_platform),
+    index("leads_stage_idx").on(table.stage),
+    index("leads_quality_score_idx").on(table.quality_score),
+    index("leads_created_at_idx").on(table.created_at),
+  ]
+);
+
+// ========== 周复盘表 ==========
+export const weeklyReviews = pgTable(
+  "weekly_reviews",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 周次
+    week_number: integer("week_number").notNull(),
+    // 日期范围
+    start_date: timestamp("start_date", { withTimezone: true }).notNull(),
+    end_date: timestamp("end_date", { withTimezone: true }).notNull(),
+    // 平台表现
+    platform_performance: jsonb("platform_performance"),
+    // 账号表现
+    account_performance: jsonb("account_performance"),
+    // 内容表现
+    content_performance: jsonb("content_performance"),
+    // 有效线索分析
+    lead_analysis: jsonb("lead_analysis"),
+    // 成功经验
+    successes: jsonb("successes"),
+    // 问题与改进
+    issues_and_improvements: jsonb("issues_and_improvements"),
+    // 下周计划
+    next_week_plan: jsonb("next_week_plan"),
+    // AI分析建议
+    ai_analysis: jsonb("ai_analysis"),
+    // 是否完成复盘
+    is_completed: boolean("is_completed").default(false),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("weekly_reviews_project_id_idx").on(table.project_id),
+    index("weekly_reviews_week_number_idx").on(table.week_number),
+    index("weekly_reviews_is_completed_idx").on(table.is_completed),
+  ]
+);
+
+// ========== 试点验证表 ==========
+export const pilotValidations = pgTable(
+  "pilot_validations",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    project_id: varchar("project_id", { length: 36 }).notNull(),
+    // 试点项
+    pilot_item: varchar("pilot_item", { length: 100 }).notNull(),
+    // 验证目标
+    validation_goal: text("validation_goal").notNull(),
+    // 当前状态
+    current_status: varchar("current_status", { length: 20 }).default("pending"),
+    // 是否通过
+    is_passed: boolean("is_passed"),
+    // 验证结果
+    results: jsonb("results"),
+    // 失败时的修复建议
+    fix_suggestions: text("fix_suggestions"),
+    validated_at: timestamp("validated_at", { withTimezone: true }),
+    created_at: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updated_at: timestamp("updated_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("pilot_validations_project_id_idx").on(table.project_id),
+    index("pilot_validations_pilot_item_idx").on(table.pilot_item),
+    index("pilot_validations_is_passed_idx").on(table.is_passed),
+  ]
+);
