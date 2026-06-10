@@ -48,6 +48,19 @@ export function middleware(request: NextRequest) {
     });
   }
 
+  // 处理/path和/path/路径直接返回验证字符串
+  if (pathname === '/path' || pathname === '/path/') {
+    return new NextResponse('tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH', {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
+  }
+
   // 其他请求继续正常处理
   return NextResponse.next();
 }
@@ -65,5 +78,7 @@ export const config = {
     '/path/tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt',
     '/.well-known/tiktok-site-verification',
     '/path/.well-known/tiktok-site-verification',
+    '/path',
+    '/path/',
   ],
 };
