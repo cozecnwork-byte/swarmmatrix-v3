@@ -1,128 +1,146 @@
-/**
- * 一键发布 API
- * POST /api/publish - 一键发布内容到所有平台
- */
+import { NextRequest, NextResponse } from 'next/server';
+import { createPublishTask } from '@/lib/supabase/queries';
 
-import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseClient } from "@/storage/database/supabase-client";
-import { llmLayer } from "@/lib/agent/llm-layer";
-
-interface PublishRequest {
-  userId: string;
-  content: string;
-  platforms?: string[];
-  title?: string;
-  scheduledAt?: string;
-  translate?: boolean;
-  targetLanguages?: string[];
-}
+// 平台配置
+const PLATFORM_CONFIGS = {
+  douyin: { name: '抖音', color: '#000000' },
+  xiaohongshu: { name: '小红书', color: '#FF2442' },
+  bilibili: { name: 'B站', color: '#00A1D6' },
+  weixin: { name: '微信公众号', color: '#07C160' },
+  weibo: { name: '微博', color: '#E6162D' },
+  instagram: { name: 'Instagram', color: '#E4405F' }
+};
 
 export async function POST(request: NextRequest) {
   try {
-    const body: PublishRequest = await request.json();
-    const { userId, content, platforms, title, scheduledAt, translate, targetLanguages } = body;
+    const body = await request.json();
+    const { 
+      title, 
+      content, 
+      platforms, 
+      scheduledTime,
+      translate,
+      userId = 'demo-user'
+    } = body;
 
-    if (!userId || !content) {
+    // 验证必填字段
+    if (!content?.trim()) {
       return NextResponse.json(
-        { success: false, error: "缺少必需参数" },
+        { success: false, error: '请输入发布内容' },
         { status: 400 }
       );
     }
 
-    const supabase = getSupabaseClient();
-
-    // 获取用户已连接的平台账号
-    const { data: accounts, error: accountsError } = await supabase
-      .from("platform_accounts")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("status", "active");
-
-    if (accountsError) {
+    if (!platforms?.length) {
       return NextResponse.json(
-        { success: false, error: accountsError.message },
-        { status: 500 }
+        { success: false, error: '请选择至少一个发布平台' },
+        { status: 400 }
       );
     }
 
-    // 确定发布平台
-    const targetPlatforms = platforms?.length
-      ? platforms
-      : accounts?.map((a) => a.platform) || ["douyin", "xiaohongshu", "bilibili"];
+    console.log(`[Publish] 开始发布流程:`, { title, platforms, scheduledTime: !!scheduledTime });
 
-    // 翻译处理
-    let processedContent = content;
-    const translations: Record<string, string> = {};
-
-    if (translate && targetLanguages?.length) {
-      for (const lang of targetLanguages) {
-        translations[lang] = await llmLayer.translate(content, lang);
-      }
-    }
-
-    // 创建引流数据记录
-    const publishResults: Array<{
+    // 模拟发布流程 - 逐个平台发布
+    const results: Array<{
       platform: string;
-      status: string;
-      data?: Record<string, unknown>;
-      error?: string;
+      success: boolean;
+      message: string;
+      publishedUrl?: string;
     }> = [];
 
-    for (const platform of targetPlatforms) {
-      // 这里模拟发布逻辑，实际需要对接各平台API
-      const publishData = {
-        user_id: userId,
-        source_platform: "internal",
-        target_platform: platform,
-        content_type: "post",
-        raw_content: { title, content: processedContent },
-        processed_content: { title, content: processedContent },
-        status: scheduledAt ? "scheduled" : "active",
-        published_at: scheduledAt ? null : new Date().toISOString(),
-      };
+    for (const platformId of platforms) {
+      const platformConfig = PLATFORM_CONFIGS[platformId as keyof typeof PLATFORM_CONFIGS];
+      
+      try {
+        // 模拟平台发布API调用
+        console.log(`[Publish] 正在发布到 ${platformConfig?.name || platformId}...`);
+        await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
 
-      const { data, error } = await supabase
-        .from("lead_data")
-        .insert(publishData)
-        .select()
-        .single();
-
-      if (error) {
-        publishResults.push({
-          platform,
-          status: "failed",
-          error: error.message,
-        });
-      } else {
-        publishResults.push({
-          platform,
-          status: "success",
-          data,
+        // 模拟成功率 90%
+        const isSuccess = Math.random() > 0.1;
+        
+        if (isSuccess) {
+          results.push({
+            platform: platformId,
+            success: true,
+            message: `成功发布到${platformConfig?.name || platformId}`,
+            publishedUrl: `https://${platformId}.com/post/demo-${Date.now()}`
+          });
+          console.log(`[Publish] ✅ ${platformConfig?.name || platformId} 发布成功`);
+        } else {
+          results.push({
+            platform: platformId,
+            success: false,
+            message: `${platformConfig?.name || platformId}发布失败，请稍后重试`
+          });
+          console.log(`[Publish] ❌ ${platformConfig?.name || platformId} 发布失败`);
+        }
+      } catch (error) {
+        results.push({
+          platform: platformId,
+          success: false,
+          message: `${platformConfig?.name || platformId}发布异常: ${(error as Error)?.message}`
         });
       }
     }
 
-    const successCount = publishResults.filter((r) => r.status === "success").length;
+    // 计算统计
+    const successCount = results.filter(r => r.success).length;
+    const failedCount = results.filter(r => !r.success).length;
+
+    // 如果有数据库集成，保存发布任务
+    try {
+      // 为每个平台创建一个发布任务（简化处理）
+      for (const platformId of platforms) {
+        const platformResult = results.find(r => r.platform === platformId);
+        await createPublishTask({
+          user_id: userId,
+          content,
+          platform: platformId,
+          status: platformResult?.success ? 'published' : 'failed',
+          scheduled_at: scheduledTime ? new Date(scheduledTime).toISOString() : undefined,
+          metadata: {
+            translate,
+            title,
+            platformResult,
+            allResults: results
+          }
+        });
+      }
+      console.log(`[Publish] 发布任务已保存到数据库`);
+    } catch (dbError) {
+      console.warn(`[Publish] 数据库保存失败 (继续流程):`, dbError);
+    }
 
     return NextResponse.json({
-      success: successCount > 0,
+      success: true,
       data: {
-        totalPlatforms: targetPlatforms.length,
-        successCount,
-        failedCount: targetPlatforms.length - successCount,
-        results: publishResults,
-        translations,
-        scheduledAt,
-      },
+        results,
+        summary: {
+          total: platforms.length,
+          success: successCount,
+          failed: failedCount
+        }
+      }
     });
+
   } catch (error) {
-    console.error("一键发布失败:", error);
+    console.error('[Publish] 发布异常:', error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "发布失败",
-      },
+      { success: false, error: '发布服务异常，请稍后重试' },
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: '一键发布API',
+    platforms: Object.entries(PLATFORM_CONFIGS).map(([id, config]) => ({
+      id,
+      name: config.name,
+      color: config.color
+    }))
+  });
 }

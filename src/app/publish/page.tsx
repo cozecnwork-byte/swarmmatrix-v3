@@ -21,6 +21,8 @@ import {
   Zap,
   Loader2,
   CheckCircle,
+  XCircle,
+  ExternalLink,
 } from "lucide-react";
 
 const platforms = [
@@ -32,6 +34,19 @@ const platforms = [
   { id: "instagram", name: "Instagram", icon: Instagram, color: "#E4405F" },
 ];
 
+type PublishResult = {
+  platform: string;
+  success: boolean;
+  message: string;
+  publishedUrl?: string;
+};
+
+type PublishSummary = {
+  total: number;
+  success: number;
+  failed: number;
+};
+
 export default function PublishPage() {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
@@ -39,7 +54,9 @@ export default function PublishPage() {
   const [translate, setTranslate] = useState(false);
   const [scheduledTime, setScheduledTime] = useState("");
   const [publishing, setPublishing] = useState(false);
-  const [result, setResult] = useState<{ success: number; failed: number } | null>(null);
+  const [publishResults, setPublishResults] = useState<PublishResult[] | null>(null);
+  const [publishSummary, setPublishSummary] = useState<PublishSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const togglePlatform = (id: string) => {
     setSelectedPlatforms((prev) =>
@@ -51,13 +68,41 @@ export default function PublishPage() {
     if (!content.trim() || selectedPlatforms.length === 0) return;
 
     setPublishing(true);
-    await new Promise((r) => setTimeout(r, 2000));
+    setError(null);
+    setPublishResults(null);
+    setPublishSummary(null);
 
-    setResult({
-      success: selectedPlatforms.length - 1,
-      failed: 1,
-    });
-    setPublishing(false);
+    try {
+      const response = await fetch('/api/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title || undefined,
+          content,
+          platforms: selectedPlatforms,
+          translate,
+          scheduledTime: scheduledTime || undefined,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || '发布失败');
+        return;
+      }
+
+      setPublishResults(data.data.results);
+      setPublishSummary(data.data.summary);
+
+    } catch (err) {
+      setError('发布服务异常，请稍后重试');
+      console.error('Publish error:', err);
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
@@ -185,15 +230,86 @@ export default function PublishPage() {
                 )}
               </Button>
 
-              {/* 发布结果 */}
-              {result && (
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex items-center gap-2 text-green-700">
-                    <CheckCircle className="h-5 w-5" />
-                    <span className="font-medium">发布完成</span>
+              {/* 错误信息 */}
+              {error && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-red-700">
+                    <XCircle className="h-5 w-5" />
+                    <span className="font-medium">发布失败</span>
                   </div>
-                  <div className="mt-2 text-sm text-green-600">
-                    成功: {result.success} 个平台 · 失败: {result.failed} 个平台
+                  <div className="mt-2 text-sm text-red-600">{error}</div>
+                </div>
+              )}
+
+              {/* 发布结果 */}
+              {publishResults && publishSummary && (
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-lg border ${publishSummary.failed === 0 ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                    <div className={`flex items-center gap-2 ${publishSummary.failed === 0 ? 'text-green-700' : 'text-yellow-700'}`}>
+                      {publishSummary.failed === 0 ? <CheckCircle className="h-5 w-5" /> : <Zap className="h-5 w-5" />}
+                      <span className="font-medium">发布完成</span>
+                    </div>
+                    <div className={`mt-2 text-sm ${publishSummary.failed === 0 ? 'text-green-600' : 'text-yellow-600'}`}>
+                      总计: {publishSummary.total} 个平台 · 
+                      成功: <span className="font-semibold text-green-700">{publishSummary.success}</span> · 
+                      失败: <span className="font-semibold text-red-600">{publishSummary.failed}</span>
+                    </div>
+                  </div>
+
+                  {/* 详细结果 */}
+                  <div className="space-y-2">
+                    {publishResults.map((result, index) => {
+                      const platformConfig = platforms.find(p => p.id === result.platform);
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center justify-between p-3 rounded-lg border ${
+                            result.success 
+                              ? 'bg-green-50 border-green-200' 
+                              : 'bg-red-50 border-red-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {platformConfig && (
+                              <div
+                                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                style={{ backgroundColor: platformConfig.color + "20" }}
+                              >
+                                <platformConfig.icon
+                                  className="h-4 w-4"
+                                  style={{ color: platformConfig.color }}
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-medium text-sm">
+                                {platformConfig?.name || result.platform}
+                              </div>
+                              <div className={`text-xs ${result.success ? 'text-green-600' : 'text-red-600'}`}>
+                                {result.message}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {result.success ? (
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-red-500" />
+                            )}
+                            {result.publishedUrl && (
+                              <a
+                                href={result.publishedUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
