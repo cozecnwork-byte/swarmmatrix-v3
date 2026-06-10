@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   other: {
-    'tiktok:site-verification': 'tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ',
+    'tiktok:site-verification': 'tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH',
   },
 };
 
@@ -15,14 +15,14 @@ export default function PathPage() {
           <p className="text-slate-600 mb-6">Verification signature for TikTok API</p>
           
           <div className="bg-slate-100 rounded-lg p-6 font-mono text-lg">
-            tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ
+            tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH
           </div>
           
           <div className="mt-6 text-sm text-slate-500">
             <p>Verification file also available at:</p>
             <ul className="list-disc list-inside mt-2">
-              <li><code className="bg-slate-100 px-1 rounded">/path/tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt</code></li>
-              <li><code className="bg-slate-100 px-1 rounded">/tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt</code></li>
+              <li><code className="bg-slate-100 px-1 rounded">/path/tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt</code></li>
+              <li><code className="bg-slate-100 px-1 rounded">/tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt</code></li>
             </ul>
           </div>
         </div>

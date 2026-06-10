@@ -6,11 +6,13 @@ const TIKTOK_VERIFICATION_FILES = [
   'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
   'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt',
   'tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt',
+  'tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt',
 ];
 const TIKTOK_VERIFICATION_CONTENTS: Record<string, string> = {
   'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt': 'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ',
   'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt': 'tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ',
   'tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt': 'tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ',
+  'tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt': 'tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH',
 };
 
 export function middleware(request: NextRequest) {
@@ -35,7 +37,7 @@ export function middleware(request: NextRequest) {
   // 处理.well-known路径的TikTok验证
   if (pathname === '/.well-known/tiktok-site-verification' || 
       pathname === '/path/.well-known/tiktok-site-verification') {
-    return new NextResponse('tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ', {
+    return new NextResponse('tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH', {
       status: 200,
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
@@ -56,9 +58,11 @@ export const config = {
     '/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
     '/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt',
     '/tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt',
+    '/tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt',
     '/path/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ.txt',
     '/path/tiktokCejA5PqaRJCGQJdkFqROybjEHYj6arZQ_20260609182904798.txt',
     '/path/tiktokuw1C2TsZxLB4OgGOmDcq7hGAZLyD4jhJ.txt',
+    '/path/tiktokeFXuBFN997KomkFY5E5cAWphHfVGvXLH.txt',
     '/.well-known/tiktok-site-verification',
     '/path/.well-known/tiktok-site-verification',
   ],
