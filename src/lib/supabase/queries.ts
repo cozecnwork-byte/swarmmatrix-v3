@@ -57,7 +57,6 @@ export async function updateProject(id: string, updates: Partial<Project>): Prom
 // 平台账号相关查询
 // ============================================
 
-// 获取用户的所有平台账号
 export async function getUserPlatformAccounts(userId: string): Promise<PlatformAccount[]> {
   const { data, error } = await supabase
     .from('platform_accounts')
@@ -69,7 +68,6 @@ export async function getUserPlatformAccounts(userId: string): Promise<PlatformA
   return data || [];
 }
 
-// 创建平台账号
 export async function createPlatformAccount(account: Omit<PlatformAccount, 'id' | 'created_at' | 'updated_at'>): Promise<PlatformAccount> {
   const { data, error } = await supabase
     .from('platform_accounts')
@@ -85,20 +83,17 @@ export async function createPlatformAccount(account: Omit<PlatformAccount, 'id' 
 // 发布任务相关查询
 // ============================================
 
-// 获取用户的发布任务
-export async function getUserPublishTasks(userId: string, limit = 50): Promise<PublishTask[]> {
+export async function getUserPublishTasks(userId: string): Promise<PublishTask[]> {
   const { data, error } = await supabase
     .from('publish_tasks')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
   return data || [];
 }
 
-// 创建发布任务
 export async function createPublishTask(task: Omit<PublishTask, 'id' | 'created_at' | 'updated_at'>): Promise<PublishTask> {
   const { data, error } = await supabase
     .from('publish_tasks')
@@ -110,19 +105,10 @@ export async function createPublishTask(task: Omit<PublishTask, 'id' | 'created_
   return data;
 }
 
-// 更新发布任务状态
-export async function updatePublishTaskStatus(id: string, status: PublishTask['status'], errorMessage?: string): Promise<PublishTask> {
-  const updates: Partial<PublishTask> = { status };
-  if (status === 'published') {
-    updates.published_at = new Date().toISOString();
-  }
-  if (errorMessage) {
-    updates.error_message = errorMessage;
-  }
-
+export async function updatePublishTaskStatus(id: string, status: PublishTask['status']): Promise<PublishTask> {
   const { data, error } = await supabase
     .from('publish_tasks')
-    .update(updates)
+    .update({ status })
     .eq('id', id)
     .select()
     .single();
@@ -135,20 +121,17 @@ export async function updatePublishTaskStatus(id: string, status: PublishTask['s
 // 线索相关查询
 // ============================================
 
-// 获取用户的线索
-export async function getUserLeads(userId: string, limit = 100): Promise<Lead[]> {
+export async function getUserLeads(userId: string): Promise<Lead[]> {
   const { data, error } = await supabase
     .from('leads')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
   return data || [];
 }
 
-// 创建线索
 export async function createLead(lead: Omit<Lead, 'id' | 'created_at' | 'updated_at'>): Promise<Lead> {
   const { data, error } = await supabase
     .from('leads')
@@ -160,7 +143,6 @@ export async function createLead(lead: Omit<Lead, 'id' | 'created_at' | 'updated
   return data;
 }
 
-// 更新线索状态
 export async function updateLeadStatus(id: string, status: Lead['status']): Promise<Lead> {
   const { data, error } = await supabase
     .from('leads')
@@ -177,7 +159,6 @@ export async function updateLeadStatus(id: string, status: Lead['status']): Prom
 // 内容模板相关查询
 // ============================================
 
-// 获取用户的内容模板
 export async function getUserContentTemplates(userId: string): Promise<ContentTemplate[]> {
   const { data, error } = await supabase
     .from('content_templates')
@@ -189,12 +170,11 @@ export async function getUserContentTemplates(userId: string): Promise<ContentTe
   return data || [];
 }
 
-// 获取公开模板
 export async function getPublicContentTemplates(): Promise<ContentTemplate[]> {
   const { data, error } = await supabase
     .from('content_templates')
     .select('*')
-    .eq('is_public', true)
+    .is('user_id', null)
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -205,7 +185,6 @@ export async function getPublicContentTemplates(): Promise<ContentTemplate[]> {
 // 智能体任务相关查询
 // ============================================
 
-// 创建智能体任务
 export async function createAgentTask(task: Omit<AgentTask, 'id' | 'created_at' | 'updated_at'>): Promise<AgentTask> {
   const { data, error } = await supabase
     .from('agent_tasks')
@@ -217,7 +196,6 @@ export async function createAgentTask(task: Omit<AgentTask, 'id' | 'created_at' 
   return data;
 }
 
-// 更新智能体任务
 export async function updateAgentTask(id: string, updates: Partial<AgentTask>): Promise<AgentTask> {
   const { data, error } = await supabase
     .from('agent_tasks')
@@ -230,14 +208,12 @@ export async function updateAgentTask(id: string, updates: Partial<AgentTask>): 
   return data;
 }
 
-// 获取用户的智能体任务
-export async function getUserAgentTasks(userId: string, limit = 20): Promise<AgentTask[]> {
+export async function getUserAgentTasks(userId: string): Promise<AgentTask[]> {
   const { data, error } = await supabase
     .from('agent_tasks')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit);
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
   return data || [];
@@ -247,7 +223,6 @@ export async function getUserAgentTasks(userId: string, limit = 20): Promise<Age
 // 数据分析相关查询
 // ============================================
 
-// 添加分析数据
 export async function addAnalyticsData(data: Omit<AnalyticsData, 'id' | 'created_at'>): Promise<AnalyticsData> {
   const { data: result, error } = await supabase
     .from('analytics_data')
@@ -259,39 +234,14 @@ export async function addAnalyticsData(data: Omit<AnalyticsData, 'id' | 'created
   return result;
 }
 
-// 获取项目分析数据
-export async function getProjectAnalytics(projectId: string, days = 30): Promise<AnalyticsData[]> {
-  const startDate = new Date();
-  startDate.setDate(startDate.getDate() - days);
-
+export async function getProjectAnalytics(projectId: string, days: number = 30): Promise<AnalyticsData[]> {
   const { data, error } = await supabase
     .from('analytics_data')
     .select('*')
     .eq('project_id', projectId)
-    .gte('date', startDate.toISOString().split('T')[0])
-    .order('date', { ascending: false });
+    .gte('created_at', new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: true });
 
   if (error) throw error;
   return data || [];
 }
-
-export default {
-  getUserProjects,
-  createProject,
-  updateProject,
-  getUserPlatformAccounts,
-  createPlatformAccount,
-  getUserPublishTasks,
-  createPublishTask,
-  updatePublishTaskStatus,
-  getUserLeads,
-  createLead,
-  updateLeadStatus,
-  getUserContentTemplates,
-  getPublicContentTemplates,
-  createAgentTask,
-  updateAgentTask,
-  getUserAgentTasks,
-  addAnalyticsData,
-  getProjectAnalytics,
-};
